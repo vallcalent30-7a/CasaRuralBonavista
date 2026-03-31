@@ -329,6 +329,99 @@ export default function App() {
     );
   }
 
+  // PÀGINA L'ENTORN
+  if (page === "L'Entorn") {
+    const seccions = [
+      {
+        id: "fires",
+        icon: "🍷",
+        titol: "Fires del vi",
+        color: "#f0ebe2",
+        items: [
+          { nom: "Fira del Vi de Falset", lloc: "Falset", data: "1–4 maig 2026", desc: "La fira de referència de la comarca. Tastos, venda directa i activitats. Dilluns 4: jornada professional B2B." },
+          { nom: "Tast de Carinyenes", lloc: "Porrera", data: "1 maig 2026", desc: "Sempre el divendres més proper a l'1 de maig. Sincronitzat amb la Fira de Falset." },
+          { nom: "Nit de les Garnatxes", lloc: "Capçanes", data: "1 maig 2026 (nit)", desc: "Celebració nocturna de la garnatxa. Sincronitzada amb la Fira del Vi." },
+          { nom: "Poboleda Vins", lloc: "Poboleda", data: "Abril 2026 (2a quinzena)", desc: "Habitualment dues setmanes abans de la Fira de Falset." },
+          { nom: "Fira del Vi de Gratallops", lloc: "Gratallops", data: "Juny 2026", desc: "A 5 minuts d'El Lloar. Habitualment a mitjans de juny." },
+          { nom: "Fira de cooperatives del Priorat", lloc: "Falset", data: "Dissabte Sant 2026", desc: "Data variable segons Setmana Santa cada any." },
+        ]
+      },
+      {
+        id: "senderisme",
+        icon: "🥾",
+        titol: "Senderisme i ciclisme",
+        color: "#e8f0e0",
+        items: [
+          { nom: "GR-135 (pas per davant de la casa)", lloc: "El Lloar", data: "Tot l'any", desc: "El camí de gran recorregut passa directament pel nucli d'El Lloar. Sortida des de la porta." },
+          { nom: "GR-174 · Ruta del Priorat", lloc: "Comarca del Priorat", data: "Tot l'any", desc: "Travessa diversos pobles del Priorat passant per Gratallops i amb connexió directa amb El Lloar." },
+          { nom: "Camins del Siurana", lloc: "El Lloar – Gratallops – Bellmunt", data: "Tot l'any", desc: "Xarxa de camins històrics entre pobles de la comarca. Ideals per a caminades tranquil·les." },
+          { nom: "Vinyes a vista d'ocell", lloc: "El Lloar → Damunt Roca → Rogerals", data: "Tot l'any", desc: "Excursió circular des del Lloar amb panorames espectaculars, vinyes i contrastos geològics entre pissarres, gresos i calcàries. Apta per a tothom, recomanable amb nens. Els més caminadors poden arribar fins a La Figuera pel GR-171." },
+          { nom: "Rutes BTT del Priorat", lloc: "Gratallops · Bellmunt · El Lloar", data: "Tot l'any", desc: "Xarxa oficial Centre BTT Priorat. Traçats que connecten amb El Lloar." },
+          { nom: "Carretera del vi (cicloturisme)", lloc: "Falset – Gratallops – El Lloar", data: "Tot l'any", desc: "Ruta circular molt popular entre ciclistes. El Lloar és parada obligada." },
+        ]
+      },
+      {
+        id: "historia",
+        icon: "🪖",
+        titol: "Història i patrimoni",
+        color: "#faf8f4",
+        items: [
+          { nom: "Observatori de la Batalla de l'Ebre", lloc: "La Figuera (41.2407, 0.7625)", data: "Visita lliure", desc: "Trinxera circular excavada a la roca. Centre de tot el sistema defensiu republicà del Priorat amb vistes directes sobre el front de l'Ebre." },
+          { nom: "Trinxeres de la Mola de Sant Pau", lloc: "La Figuera (41.2415, 0.7618)", data: "Visita lliure", desc: "Trinxeres excavades i reforçades amb formigó, connectades amb l'observatori. Restes visibles de parapets i refugis." },
+          { nom: "Cartoixa d'Escaladei (Scala Dei)", lloc: "15–20 min en cotxe", data: "Visita guiada", desc: "Primer monestir cartoixà de la península Ibèrica i origen del nom 'Priorat'. Rutes associades: Camí de la Cartoixa, Ruta dels Cartoixans (PR-C 88)." },
+          { nom: "Església de Sant Miquel", lloc: "El Lloar", data: "Visita lliure", desc: "Construïda entre 1777 i 1778. Estil neoclàssic amb tres naus, cor, cimbori i campanar. Bé Cultural d'Interès Local." },
+          { nom: "Mirador del Priorat", lloc: "Carrer de Sant Miquel, El Lloar", data: "Sempre obert", desc: "Balconada natural al cor del poble amb vistes magnífiques al riu Montsant al fons de la vall." },
+          { nom: "Coves dels Rogerals", lloc: "1,5 km del poble", data: "Visita lliure", desc: "Conjunt de coves prehistòriques prop del Nas del Quiuma (gran bloc d'arenisca rogenca) i la font de Minfami, d'origen sarraí." },
+        ]
+      },
+    ];
+
+    return (
+      <div style={s.wrap}>
+        <NavBar />
+        <div style={{ background: "#7a9a68", minHeight: 260, display: "flex", alignItems: "flex-end", padding: "0 2rem 2rem", position: "relative" }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)" }} />
+          <div style={{ position: "relative", zIndex: 2 }}>
+            <p style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#d0f0d0", letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 6px" }}>Priorat · Catalunya</p>
+            <h1 style={{ fontFamily: "Georgia, serif", fontSize: 36, color: "#fff", margin: 0, textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>L'Entorn</h1>
+            <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#d0e8d0", margin: "4px 0 0" }}>Vi, natura, història i cultura al Priorat</p>
+          </div>
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}>
+            <svg viewBox="0 0 1440 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ display: "block", width: "100%", height: 40 }}>
+              <path d="M0,10 C400,40 1000,0 1440,25 L1440,40 L0,40 Z" fill="#faf8f4" />
+            </svg>
+          </div>
+        </div>
+
+        <div style={{ maxWidth: 900, margin: "0 auto", padding: "2rem 2rem 3rem" }}>
+          <BackBtn to="Inici" label="Tornar a l'inici" />
+
+          {seccions.map(seccio => (
+            <div key={seccio.id} style={{ marginBottom: 48 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, paddingBottom: 12, borderBottom: "0.5px solid #e0dbd0" }}>
+                <span style={{ fontSize: 28 }}>{seccio.icon}</span>
+                <h2 style={{ fontFamily: "Georgia, serif", fontSize: 24, fontWeight: 500, color: "#3a2a18", margin: 0 }}>{seccio.titol}</h2>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+                {seccio.items.map(item => (
+                  <div key={item.nom} style={{ background: seccio.color, border: "0.5px solid #e0dbd0", borderRadius: 12, padding: "1.25rem" }}>
+                    <div style={{ fontFamily: "Georgia, serif", fontSize: 15, fontWeight: 600, color: "#3a2a18", marginBottom: 4 }}>{item.nom}</div>
+                    <div style={{ display: "flex", gap: 12, marginBottom: 8 }}>
+                      <span style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#9a7a5a" }}>📍 {item.lloc}</span>
+                      <span style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#9a7a5a" }}>📅 {item.data}</span>
+                    </div>
+                    <p style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#666", lineHeight: 1.7, margin: 0 }}>{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   // HOME
   return (
     <div style={s.wrap}>
