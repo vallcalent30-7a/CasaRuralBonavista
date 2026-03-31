@@ -84,7 +84,7 @@ export default function App() {
       {/* HERO */}
       <div style={{ position: "relative", width: "100%", minHeight: 520, background: "#c4b090", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
         <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/El_Lloar_%28Priorat%29.jpg/1440px-El_Lloar_%28Priorat%29.jpg"
+          src="/el-lloar1.jpg"
           alt="El Lloar, Priorat"
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
         />
@@ -116,8 +116,7 @@ export default function App() {
       {/* HABITACIONS */}
       <div style={{ background: "#faf8f4", padding: "3rem 2rem 0" }}>
         <h2 style={{ fontFamily: "Georgia, serif", fontSize: 28, fontWeight: 500, color: "#3a2a18", textAlign: "center", margin: "0 0 0.4rem" }}>Habitacions</h2>
-        <p style={{ textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 14, color: "#999", margin: "0 0 2rem" }}>2 suites dobles · 1 suite quàdruple · Màx. 8 persones</p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, maxWidth: 900, margin: "0 auto 3rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, maxWidth: 900, margin: "0 auto 3rem" }}>
           {ROOM_IMGS.map((r) => (
             <div key={r.label} onClick={() => go("Habitacions")} style={{ cursor: "pointer", position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "2/3", background: r.color }}>
               <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.28)" }} />
