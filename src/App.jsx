@@ -91,8 +91,9 @@ export default function App() {
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(20,12,4,0.35) 0%, rgba(20,12,4,0.55) 100%)" }} />
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", padding: "4rem 2rem 5rem" }}>
           <p style={{ fontSize: 13, color: "#f0e0c0", letterSpacing: "0.12em", textTransform: "uppercase", margin: "0 0 0.5rem", fontFamily: "Arial, sans-serif" }}>Turisme rural · El Lloar · Priorat</p>
-          <h1 style={{ fontFamily: "'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif", fontSize: 54, fontWeight: 700, color: "#fff", margin: "0 0 0.6rem", letterSpacing: "0.04em", textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}>
-            Casa rural Bonavista
+          <h1 style={{ fontFamily: "'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif", fontSize: "clamp(28px, 6vw, 54px)"
+, fontWeight: 700, color: "#fff", margin: "0 0 0.6rem", letterSpacing: "0.04em", textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}>
+            Casa Rural Bonavista
           </h1>
           <p style={{ fontFamily: "Arial, sans-serif", fontSize: 22, color: "#f0e8d8", margin: "0 0 1.2rem", fontWeight: 400, textShadow: "0 1px 6px rgba(0,0,0,0.3)" }}>
             Benvinguts al cor del Priorat
