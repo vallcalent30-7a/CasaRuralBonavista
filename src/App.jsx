@@ -422,6 +422,214 @@ export default function App() {
     );
   }
 
+  // PÀGINA RESERVES
+  if (page === "Reserves") {
+    const TARIFES = {
+      "Suite 1": { baixa: 160, alta: 192, extra: 40 },
+      "Suite 2": { baixa: 120, alta: 144, extra: 0 },
+      "Suite 3": { baixa: 120, alta: 144, extra: 0 },
+    };
+
+    const temporada = (mes) => (mes >= 6 && mes <= 7) ? "alta" : "baixa";
+
+    const BLOCKED = ["2026-04-10","2026-04-11","2026-04-12","2026-04-13","2026-04-14","2026-04-18","2026-04-19","2026-05-01","2026-05-02","2026-05-03"];
+
+    const ReservesPage = () => {
+      const [any, setAny] = useState(2026);
+      const [mes, setMes] = useState(3);
+      const [selDies, setSelDies] = useState([]);
+      const [suiteEsc, setSuiteEsc] = useState(null);
+      const [pax, setPax] = useState(2);
+      const [step, setStep] = useState(1);
+      const [form, setForm] = useState({ nom: "", email: "", tel: "", notes: "" });
+      const [enviat, setEnviat] = useState(false);
+
+      const mesos = ["Gener","Febrer","Març","Abril","Maig","Juny","Juliol","Agost","Setembre","Octubre","Novembre","Desembre"];
+      const dies = new Date(any, mes + 1, 0).getDate();
+      const primer = (new Date(any, mes, 1).getDay() + 6) % 7;
+      const toKey = (d) => `${any}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+      const toggleDia = (d) => {
+        const k = toKey(d);
+        if (BLOCKED.includes(k)) return;
+        setSelDies(prev => prev.includes(k) ? prev.filter(x => x !== k) : [...prev, k].sort());
+        setSuiteEsc(null);
+      };
+
+      const nits = selDies.length > 1 ? selDies.length - 1 : 0;
+      const temp = temporada(mes);
+
+      const calcPreu = (suite) => {
+        const t = TARIFES[suite];
+        const base = t[temp] * nits;
+        const extra = (suite === "Suite 1" && pax > 2) ? t.extra * (pax - 2) * nits : 0;
+        return base + extra;
+      };
+
+      const suitesDisp = ["Suite 1", "Suite 2", "Suite 3"];
+
+      return (
+        <div style={s.wrap}>
+          <NavBar />
+          <div style={{ background: "#5a3e28", minHeight: 200, display: "flex", alignItems: "flex-end", padding: "0 2rem 2rem", position: "relative" }}>
+            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)" }} />
+            <div style={{ position: "relative", zIndex: 2 }}>
+              <h1 style={{ fontFamily: "Georgia, serif", fontSize: 36, color: "#fff", margin: 0 }}>Reserves</h1>
+              <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#f0e8d8", margin: "4px 0 0" }}>Selecciona dates, suite i completa la sol·licitud</p>
+            </div>
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}>
+              <svg viewBox="0 0 1440 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ display: "block", width: "100%", height: 40 }}>
+                <path d="M0,10 C400,40 1000,0 1440,25 L1440,40 L0,40 Z" fill="#faf8f4" />
+              </svg>
+            </div>
+          </div>
+
+          <div style={{ maxWidth: 900, margin: "0 auto", padding: "2rem" }}>
+
+            {/* STEPS */}
+            <div style={{ display: "flex", gap: 0, marginBottom: 32 }}>
+              {["Dates", "Suite", "Sol·licitud"].map((st, i) => (
+                <div key={st} style={{ flex: 1, textAlign: "center", padding: "10px", background: step === i+1 ? "#5a3e28" : step > i+1 ? "#f0ebe2" : "#fff", border: "0.5px solid #e0dbd0", fontFamily: "Arial, sans-serif", fontSize: 13, fontWeight: step === i+1 ? 600 : 400, color: step === i+1 ? "#fff" : step > i+1 ? "#5a3e28" : "#999", borderRadius: i === 0 ? "8px 0 0 8px" : i === 2 ? "0 8px 8px 0" : 0 }}>
+                  {i+1}. {st} {step > i+1 ? "✓" : ""}
+                </div>
+              ))}
+            </div>
+
+            {/* STEP 1 — DATES */}
+            {step === 1 && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+                <div style={{ background: "#fff", border: "0.5px solid #e0dbd0", borderRadius: 12, padding: "1.5rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <button onClick={() => { if (mes === 0) { setMes(11); setAny(y=>y-1); } else setMes(m=>m-1); setSelDies([]); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "#5a3e28" }}>‹</button>
+                    <span style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 500 }}>{mesos[mes]} {any}</span>
+                    <button onClick={() => { if (mes === 11) { setMes(0); setAny(y=>y+1); } else setMes(m=>m+1); setSelDies([]); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "#5a3e28" }}>›</button>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3 }}>
+                    {["Dl","Dt","Dc","Dj","Dv","Ds","Dg"].map(d => <div key={d} style={{ textAlign: "center", fontSize: 11, color: "#999", padding: "4px 0", fontFamily: "Arial, sans-serif" }}>{d}</div>)}
+                    {Array(primer).fill(null).map((_,i) => <div key={"e"+i} />)}
+                    {Array(dies).fill(null).map((_,i) => {
+                      const k = toKey(i+1);
+                      const blocked = BLOCKED.includes(k);
+                      const sel = selDies.includes(k);
+                      return (
+                        <div key={i} onClick={() => toggleDia(i+1)} style={{ aspectRatio: "1", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6, fontSize: 13, cursor: blocked ? "not-allowed" : "pointer", background: blocked ? "#f0ece6" : sel ? "#5a3e28" : "transparent", color: blocked ? "#ccc" : sel ? "#fff" : "#2c2a25", fontFamily: "Arial, sans-serif" }}>
+                          {i+1}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ marginTop: 12, fontSize: 12, color: "#aaa", fontFamily: "Arial, sans-serif", display: "flex", gap: 16 }}>
+                    <span>■ <span style={{ color: "#ccc" }}>No disponible</span></span>
+                    <span style={{ color: "#5a3e28" }}>■ Seleccionat</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ background: "#f0ebe2", borderRadius: 12, padding: "1.5rem", marginBottom: 16 }}>
+                    <h3 style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 500, color: "#3a2a18", marginTop: 0 }}>Tarifes {temp === "alta" ? "temporada alta" : "temporada baixa"}</h3>
+                    {Object.entries(TARIFES).map(([suite, t]) => (
+                      <div key={suite} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "0.5px solid #e0dbd0", fontFamily: "Arial, sans-serif", fontSize: 13 }}>
+                        <span style={{ color: "#666" }}>{suite}</span>
+                        <span style={{ fontWeight: 600, color: "#5a3e28" }}>{t[temp]}€<span style={{ fontWeight: 400, color: "#999" }}>/nit</span>{suite === "Suite 1" ? <span style={{ color: "#aaa", fontSize: 11 }}> +{t.extra}€/pax extra</span> : ""}</span>
+                      </div>
+                    ))}
+                    <p style={{ fontSize: 12, color: "#aaa", margin: "8px 0 0", fontFamily: "Arial, sans-serif" }}>Temporada alta: Juliol–Agost (x1.2)</p>
+                  </div>
+
+                  {nits > 0 && (
+                    <div style={{ background: "#fff", border: "0.5px solid #e0dbd0", borderRadius: 12, padding: "1.5rem" }}>
+                      <div style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666", marginBottom: 12 }}>
+                        <strong style={{ color: "#3a2a18" }}>{nits} nit{nits > 1 ? "s" : ""}</strong> seleccionada{nits > 1 ? "s" : ""}
+                      </div>
+                      <div style={{ marginBottom: 12 }}>
+                        <label style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#666" }}>Nombre de persones</label>
+                        <select value={pax} onChange={e => setPax(Number(e.target.value))} style={{ width: "100%", padding: "8px", border: "0.5px solid #e0dbd0", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 14, marginTop: 4 }}>
+                          {[1,2,3,4].map(n => <option key={n} value={n}>{n} persona{n>1?"es":""}</option>)}
+                        </select>
+                      </div>
+                      <button onClick={() => setStep(2)} style={{ background: "#5a3e28", color: "#fff", border: "none", width: "100%", padding: "12px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 15, cursor: "pointer", fontWeight: 600 }}>Veure suites disponibles →</button>
+                    </div>
+                  )}
+                  {nits === 0 && <div style={{ background: "#fdf8f0", border: "0.5px solid #e0dbd0", borderRadius: 12, padding: "1.5rem", textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 14, color: "#aaa" }}>Selecciona les dates d'entrada i sortida al calendari</div>}
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2 — SUITE */}
+            {step === 2 && (
+              <div>
+                <button onClick={() => setStep(1)} style={{ background: "none", border: "none", color: "#5a3e28", cursor: "pointer", fontFamily: "Arial, sans-serif", fontSize: 14, marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}>← Canviar dates</button>
+                <div style={{ background: "#f0ebe2", borderRadius: 12, padding: "1rem 1.5rem", marginBottom: 24, fontFamily: "Arial, sans-serif", fontSize: 14, color: "#5a3e28" }}>
+                  📅 {nits} nit{nits>1?"s":""} · {pax} persona{pax>1?"es":""} · Temporada {temp}
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 20 }}>
+                  {suitesDisp.map(suite => {
+                    const preu = calcPreu(suite);
+                    const sel = suiteEsc === suite;
+                    return (
+                      <div key={suite} onClick={() => setSuiteEsc(suite)} style={{ cursor: "pointer", background: "#fff", border: sel ? "2px solid #5a3e28" : "0.5px solid #e0dbd0", borderRadius: 12, padding: "1.5rem", transition: "border 0.15s" }}>
+                        <div style={{ fontFamily: "Georgia, serif", fontSize: 18, fontWeight: 600, color: "#3a2a18", marginBottom: 4 }}>{suite}</div>
+                        <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#9a8060", marginBottom: 12 }}>{suite === "Suite 1" ? "Quàdruple · Balcó privatiu" : "Doble"}</div>
+                        <div style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 600, color: "#5a3e28", marginBottom: 4 }}>{preu}€</div>
+                        <div style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#aaa", marginBottom: 12 }}>total {nits} nit{nits>1?"s":""}{suite === "Suite 1" && pax > 2 ? ` (incl. ${pax-2} pax extra)` : ""}</div>
+                        <div style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#5a3e28" }}>✓ Esmorzar inclòs · Estada mín. 2 nits</div>
+                        {sel && <div style={{ marginTop: 12, background: "#5a3e28", color: "#fff", textAlign: "center", padding: "6px", borderRadius: 6, fontFamily: "Arial, sans-serif", fontSize: 13, fontWeight: 600 }}>Seleccionada ✓</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+                {suiteEsc && (
+                  <button onClick={() => setStep(3)} style={{ background: "#5a3e28", color: "#fff", border: "none", width: "100%", padding: "14px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 15, cursor: "pointer", fontWeight: 600, marginTop: 24 }}>Continuar amb {suiteEsc} — {calcPreu(suiteEsc)}€ →</button>
+                )}
+              </div>
+            )}
+
+            {/* STEP 3 — FORMULARI */}
+            {step === 3 && !enviat && (
+              <div style={{ maxWidth: 560, margin: "0 auto" }}>
+                <button onClick={() => setStep(2)} style={{ background: "none", border: "none", color: "#5a3e28", cursor: "pointer", fontFamily: "Arial, sans-serif", fontSize: 14, marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}>← Canviar suite</button>
+                <div style={{ background: "#f0ebe2", borderRadius: 12, padding: "1rem 1.5rem", marginBottom: 24, display: "flex", justifyContent: "space-between", fontFamily: "Arial, sans-serif", fontSize: 14 }}>
+                  <span style={{ color: "#5a3e28", fontWeight: 600 }}>{suiteEsc}</span>
+                  <span style={{ color: "#5a3e28", fontWeight: 600 }}>{calcPreu(suiteEsc)}€</span>
+                </div>
+                {[["Nom complet", "nom", "text"], ["Email", "email", "email"], ["Telèfon", "tel", "tel"]].map(([lbl, field, type]) => (
+                  <div key={field} style={{ marginBottom: 12 }}>
+                    <label style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#666", display: "block", marginBottom: 4 }}>{lbl}</label>
+                    <input type={type} value={form[field]} onChange={e => setForm({...form, [field]: e.target.value})} style={{ width: "100%", padding: "10px 12px", border: "0.5px solid #e0dbd0", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 14, boxSizing: "border-box" }} />
+                  </div>
+                ))}
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#666", display: "block", marginBottom: 4 }}>Notes o peticions especials</label>
+                  <textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} style={{ width: "100%", padding: "10px 12px", border: "0.5px solid #e0dbd0", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 14, minHeight: 80, resize: "vertical", boxSizing: "border-box" }} />
+                </div>
+                <div style={{ background: "#fdf8f0", border: "0.5px solid #e8e0d0", borderRadius: 12, padding: "1rem 1.25rem", marginBottom: 20, fontFamily: "Arial, sans-serif", fontSize: 13, color: "#666", lineHeight: 1.7 }}>
+                  <strong style={{ color: "#3a2a18" }}>Política de cancel·lació:</strong> Cancel·lació gratuïta fins a 14 dies abans de l'entrada. Passats els 14 dies, la reserva no és reemborsable.<br/>
+                  <strong style={{ color: "#3a2a18" }}>Condicions:</strong> Check-in a partir de les 15h. Check-out abans de les 11h. Estada mínima 2 nits. Mascotes benvingudes.
+                </div>
+                <button onClick={() => setEnviat(true)} style={{ background: "#5a3e28", color: "#fff", border: "none", width: "100%", padding: "14px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 15, cursor: "pointer", fontWeight: 600 }}>Enviar sol·licitud de reserva</button>
+              </div>
+            )}
+
+            {enviat && (
+              <div style={{ textAlign: "center", padding: "3rem 2rem" }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+                <h2 style={{ fontFamily: "Georgia, serif", fontSize: 24, color: "#3a2a18", fontWeight: 500 }}>Sol·licitud enviada!</h2>
+                <p style={{ fontFamily: "Arial, sans-serif", fontSize: 15, color: "#666", lineHeight: 1.8 }}>
+                  Hem rebut la teva sol·licitud per <strong>{suiteEsc}</strong>.<br/>
+                  La Bàrbara et contactarà en menys de 24 hores a <strong>{form.email}</strong> per confirmar la reserva i les instruccions de pagament.
+                </p>
+                <button onClick={() => { setStep(1); setSelDies([]); setSuiteEsc(null); setEnviat(false); setForm({ nom:"", email:"", tel:"", notes:"" }); go("Inici"); }} style={{ background: "#5a3e28", color: "#fff", border: "none", padding: "12px 32px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 14, cursor: "pointer", marginTop: 16 }}>Tornar a l'inici</button>
+              </div>
+            )}
+          </div>
+          <Footer />
+        </div>
+      );
+    };
+
+    return <ReservesPage />;
+  }
+
   // HOME
   return (
     <div style={s.wrap}>
