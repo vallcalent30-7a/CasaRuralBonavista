@@ -1,20 +1,15 @@
 // Casa Rural Bonavista — App.jsx
-// Versió: v1.4 — 13 juliol 2026 — DIAGNÒSTIC TEMPORAL
-// ContactePage s'ha substituït temporalment per una versió mínima (sense
-// formulari) per aïllar el bug "pantalla en blanc" que arrossega des de fa
-// diverses sessions. El contingut complet es conserva a ContactePageComplet
-// (no s'ha esborrat res). Un cop confirmem si aquesta versió mínima funciona
-// en producció, revertim o continuem la bisecció.
-// Versió: v1.3 — 13 juliol 2026
-// Canvis respecte v1.2: afegit un ErrorBoundary a nivell d'App. Si una pàgina
-// (p.ex. Contacte) llança un error en producció, ara es mostra el missatge d'error
-// en pantalla amb un botó "Tornar a l'inici", en lloc de buidar tota l'app (#root
-// quedant completament buit, sense menú ni contingut — el símptoma reportat).
-// Canvis respecte v1.1: correcció del plural de "persona/persones" al desplegable
-// i al resum de Reserves (abans mostrava "personaes").
-// Canvis respecte v1.0: Reserves — selecció de dates com a rang (1r clic = entrada,
-// 2n clic = sortida), càlcul de nits per diferència real de dates i validació de
-// dies bloquejats dins del rang seleccionat.
+// Versió: v1.5 — 13 juliol 2026 — DIAGNÒSTIC TEMPORAL (pas 2)
+// v1.4 (versió mínima de Contacte) va funcionar en producció → el problema
+// és dins del contingut. Aquesta versió (v1.5) reintrodueix TOT el contingut
+// real (formulari, validació, honeypot, info) EXCEPTE l'iframe de Google
+// Maps, per aïllar si l'iframe és la causa. ContactePageComplet (amb
+// l'iframe) es conserva sense fer servir per si cal restaurar-lo.
+//
+// Historial: v1.3 va afegir l'ErrorBoundary d'App. v1.2 va corregir el
+// plural "persona/persones". v1.1 va introduir la selecció de dates per
+// rang a Reserves. v1.0 va corregir el formulari de Contacte (enviament
+// mailto, honeypot, validació d'email).
 
 import { useState, Component } from "react";
 
@@ -137,22 +132,173 @@ const FOTOS_CASA = [
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// ─── DIAGNÒSTIC TEMPORAL ────────────────────────────────────────────────
-// Versió mínima de ContactePage per aïllar el bug "pantalla en blanc".
-// Si AMB AIXÒ la pàgina Contacte funciona: el problema és dins del contingut
-// de ContactePageComplet (formulari, iframe, etc.) — reintroduirem peces una
-// a una. Si AMB AIXÒ TAMBÉ falla: el problema no és el contingut de la
-// pàgina, sinó algun altre factor (build, cache, etc.).
+// ─── DIAGNÒSTIC TEMPORAL (pas 2) ────────────────────────────────────────
+// La versió mínima (pas 1) va funcionar en producció, per tant el problema
+// és dins del contingut de ContactePageComplet. Aquesta versió té TOT el
+// contingut real (formulari, validació, honeypot, columna d'informació)
+// EXCEPTE la secció "Com arribar" amb l'iframe de Google Maps, per aïllar
+// si l'iframe és la causa del crash.
 function ContactePage({ go, s, NavBar, Footer, BackBtn }) {
+  const [cForm, setCForm] = useState({ nom: "", email: "", msg: "", website: "", consent: false });
+  const [cEnviat, setCEnviat] = useState(false);
+  const [intentValidar, setIntentValidar] = useState(false);
+  const [errorEnviament, setErrorEnviament] = useState("");
+
+  const emailValid = EMAIL_RE.test(cForm.email.trim());
+  const cValid = Boolean(cForm.nom.trim() && emailValid && cForm.msg.trim() && cForm.consent);
+
+  const errors = [];
+  if (intentValidar && !cEnviat) {
+    if (!cForm.nom.trim()) errors.push("Falta el nom.");
+    if (!cForm.email.trim()) errors.push("Falta el correu electrònic.");
+    else if (!emailValid) errors.push("El correu electrònic no té un format vàlid.");
+    if (!cForm.msg.trim()) errors.push("Falta el missatge.");
+    if (!cForm.consent) errors.push("Cal acceptar la Política de Privacitat per continuar.");
+  }
+
+  const enviar = () => {
+    setIntentValidar(true);
+    setErrorEnviament("");
+    if (!cValid) return;
+
+    if (cForm.website.trim() !== "") {
+      setCEnviat(true);
+      return;
+    }
+
+    try {
+      const cos = `Nom: ${cForm.nom}\nEmail: ${cForm.email}\n\n${cForm.msg}`;
+      const mailtoUrl = `mailto:contacta@casaruralbonavista.cat?subject=${encodeURIComponent("Missatge de contacte - web Casa Rural Bonavista")}&body=${encodeURIComponent(cos)}`;
+      window.location.href = mailtoUrl;
+      setCEnviat(true);
+    } catch (err) {
+      setErrorEnviament("No s'ha pogut obrir el client de correu. Escriu-nos directament a contacta@casaruralbonavista.cat.");
+    }
+  };
+
   return (
     <div style={s.wrap}>
       <NavBar />
-      <div style={{ maxWidth: 820, margin: "0 auto", padding: "3rem 2rem" }}>
+      <div style={{ background: "#5a3e28", minHeight: 200, display: "flex", alignItems: "flex-end", padding: "0 2rem 2rem", position: "relative" }}>
+        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)" }} />
+        <div style={{ position: "relative", zIndex: 2 }}>
+          <h1 style={{ fontFamily: "Georgia, serif", fontSize: 36, color: "#fff", margin: 0 }}>Contacte</h1>
+          <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#f0e8d8", margin: "4px 0 0" }}>Estem aquí per ajudar-vos</p>
+        </div>
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}>
+          <svg viewBox="0 0 1440 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ display: "block", width: "100%", height: 40 }}>
+            <path d="M0,10 C400,40 1000,0 1440,25 L1440,40 L0,40 Z" fill="#faf8f4" />
+          </svg>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 820, margin: "0 auto", padding: "2rem 2rem 3rem" }}>
         <BackBtn to="Inici" label="Tornar a l'inici" />
-        <h1 style={{ fontFamily: "Georgia, serif", fontSize: 28, color: "#3a2a18" }}>Contacte (versió de prova)</h1>
-        <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666" }}>
-          Si veus aquest text, la pàgina Contacte funciona correctament a nivell estructural.
-        </p>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, marginBottom: 48 }}>
+          <div>
+            <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 500, color: "#3a2a18", marginTop: 0 }}>Envia'ns un missatge</h2>
+            {!cEnviat ? (
+              <>
+                {[["Nom complet", "nom", "text"], ["Correu electrònic", "email", "email"]].map(([lbl, field, type]) => (
+                  <div key={field} style={{ marginBottom: 12 }}>
+                    <label style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#666", display: "block", marginBottom: 4 }}>{lbl}</label>
+                    <input type={type} value={cForm[field]} onChange={e => setCForm({ ...cForm, [field]: e.target.value })} style={{ width: "100%", padding: "10px 12px", border: "0.5px solid #e0dbd0", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 14, boxSizing: "border-box" }} />
+                  </div>
+                ))}
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#666", display: "block", marginBottom: 4 }}>Missatge</label>
+                  <textarea value={cForm.msg} onChange={e => setCForm({ ...cForm, msg: e.target.value })} style={{ width: "100%", padding: "10px 12px", border: "0.5px solid #e0dbd0", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 14, minHeight: 100, resize: "vertical", boxSizing: "border-box" }} />
+                </div>
+                <input type="text" name="website" value={cForm.website} onChange={e => setCForm({ ...cForm, website: e.target.value })} style={{ display: "none" }} tabIndex="-1" autoComplete="off" />
+                <div style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 12, padding: "12px", background: "#fdf8f0", borderRadius: 8, border: "0.5px solid #e8e0d0" }}>
+                  <input type="checkbox" id="consent-contact" checked={cForm.consent} onChange={e => setCForm({ ...cForm, consent: e.target.checked })} style={{ marginTop: 2, flexShrink: 0 }} />
+                  <label htmlFor="consent-contact" style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#666", lineHeight: 1.6, cursor: "pointer" }}>
+                    He llegit i accepto la <span style={{ color: "#5a3e28", textDecoration: "underline", cursor: "pointer" }} onClick={() => go("Privacitat")}>Política de Privacitat</span>. Accepto que les meves dades siguin tractades per respondre a la meva consulta (Art. 6.1.a RGPD).
+                  </label>
+                </div>
+                {errors.length > 0 && (
+                  <div style={{ marginBottom: 16, padding: "10px 14px", background: "#fdeceb", border: "0.5px solid #e8b0aa", borderRadius: 8 }}>
+                    {errors.map(e => (
+                      <div key={e} style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#a03028" }}>• {e}</div>
+                    ))}
+                  </div>
+                )}
+                {errorEnviament && (
+                  <div style={{ marginBottom: 16, padding: "10px 14px", background: "#fdeceb", border: "0.5px solid #e8b0aa", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 12, color: "#a03028" }}>
+                    {errorEnviament}
+                  </div>
+                )}
+                <button onClick={enviar} aria-disabled={!cValid} style={{ background: cValid ? "#5a3e28" : "#ccc", color: "#fff", border: "none", width: "100%", padding: "12px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 15, cursor: "pointer", fontWeight: 600 }}>
+                  Enviar missatge
+                </button>
+              </>
+            ) : (
+              <div style={{ textAlign: "center", padding: "2rem 0" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>📬</div>
+                <h3 style={{ fontFamily: "Georgia, serif", fontWeight: 500, color: "#3a2a18" }}>S'ha obert el teu client de correu</h3>
+                <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666" }}>
+                  Revisa el missatge preparat i prem "Enviar" des d'allà per completar l'enviament.<br />
+                  Si no s'ha obert cap aplicació, escriu-nos directament a <strong>contacta@casaruralbonavista.cat</strong>.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 500, color: "#3a2a18", marginTop: 0 }}>Informació</h2>
+            {[
+              { icon: "✉️", label: "Email", val: "contacta@casaruralbonavista.cat" },
+              { icon: "📍", label: "Adreça", val: "Carrer del Pla More, 13\nEl Lloar · 43737 Tarragona" },
+              { icon: "📞", label: "Telèfon", val: "Pròximament disponible" },
+              { icon: "🕐", label: "Resposta", val: "En menys de 24 hores" },
+            ].map(item => (
+              <div key={item.label} style={{ display: "flex", gap: 14, marginBottom: 20, alignItems: "flex-start" }}>
+                <span style={{ fontSize: 20, marginTop: 2 }}>{item.icon}</span>
+                <div>
+                  <div style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#9a8060", marginBottom: 2 }}>{item.label}</div>
+                  <div style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#3a2a18", whiteSpace: "pre-line" }}>{item.val}</div>
+                </div>
+              </div>
+            ))}
+            <div style={{ marginTop: 24, background: "#f0ebe2", borderRadius: 12, padding: "1rem 1.25rem" }}>
+              <p style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#7a5a3a", margin: 0, lineHeight: 1.7 }}>
+                Per a sol·licituds de reserva, utilitza el formulari de <span style={{ color: "#5a3e28", fontWeight: 600, cursor: "pointer" }} onClick={() => go("Reserves")}>Reserves</span> per obtenir disponibilitat i preu en temps real.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 500, color: "#3a2a18", marginBottom: 20 }}>Com arribar</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+            {[
+              { icon: "🚗", title: "Des de Barcelona", text: "AP-2 / N-420 fins a Falset, T-710 fins a Gratallops i T-712 fins a El Lloar. Aprox. 1h 45min." },
+              { icon: "🚗", title: "Des de Tarragona", text: "N-420 fins a Falset, T-710 i T-712. Aprox. 1h 15min." },
+              { icon: "🚗", title: "Des de Lleida", text: "C-12 fins a Garcia, N-420 fins a Falset, T-710 i T-712. Aprox. 1h 30min." },
+              { icon: "🅿️", title: "Aparcament", text: "Aparcament gratuït disponible al costat de la casa." },
+            ].map(item => (
+              <div key={item.title} style={{ background: "#fff", border: "0.5px solid #e8e0d0", borderRadius: 12, padding: "1rem 1.25rem" }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <span style={{ fontSize: 20 }}>{item.icon}</span>
+                  <div>
+                    <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, fontWeight: 600, color: "#5a3e28", marginBottom: 4 }}>{item.title}</div>
+                    <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#888", lineHeight: 1.6 }}>{item.text}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ background: "#f0ebe2", borderRadius: 12, padding: "1rem 1.5rem", marginBottom: 24 }}>
+            <p style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#7a5a3a", margin: 0 }}>
+              📍 <strong>Carrer del Pla More, 13 · El Lloar · 43737 Tarragona</strong><br />
+              <span style={{ fontSize: 12, color: "#9a8060" }}>Les instruccions d'accés detallades s'envien per correu un cop confirmada la reserva.</span>
+            </p>
+          </div>
+          <div style={{ background: "#fdf8f0", border: "0.5px dashed #e0dbd0", borderRadius: 12, padding: "1.5rem", textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 13, color: "#aaa" }}>
+            [Mapa desactivat temporalment — prova de diagnòstic pas 2]
+          </div>
+        </div>
       </div>
       <Footer />
     </div>
