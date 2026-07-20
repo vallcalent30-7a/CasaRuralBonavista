@@ -1,4 +1,31 @@
 // Casa Rural Bonavista — App.jsx
+// Versió: v2.0 — 20 juliol 2026
+// Afegit el logo real (imatge) a la barra de navegació i al peu de pàgina,
+// referenciat com a /logo.png. CAL pujar el fitxer logo.png a la carpeta
+// "public/" de l'arrel del projecte a StackBlitz (mateix nivell que src/)
+// perquè es serveixi correctament a producció.
+// Versió: v1.9 — 20 juliol 2026
+// - Renumeració de suites: Suite 3 = quàdruple amb balcó privatiu (la "més
+//   especial"); Suite 1 = petita; Suite 2 = mitjana. Actualitzat a SUITES,
+//   ROOM_IMGS, TARIFES i totes les condicions suite === "Suite X" a Reserves.
+// - Eliminades totes les referències a sopar al balcó (mai se sopa al balcó).
+// - Nou Pack Romàntic: experiència d'1 nit exclusiva de la Suite 3, 180€ tot
+//   inclòs (detall de benvinguda, sopar amb espelmes, vi DOQ Priorat), es
+//   reserva com a afegit a una nit ja reservada de la Suite 3 (pas 3 de
+//   Reserves: casella + selector de nit, preu total i missatge de
+//   confirmació actualitzats en conseqüència).
+// - Preus de la pàgina Habitacions ara llegeixen sempre de TARIFES (font
+//   única de veritat), coherents amb els preus mostrats a Reserves.
+// Versió: v1.8 — 13 juliol 2026
+// Afegida casella de consentiment RGPD obligatòria al pas 3 de Reserves
+// (abans no n'hi havia cap, tot i recollir nom/email/telèfon/notes). Ara
+// l'enviament es bloqueja sense acceptar, amb validació de nom/email i
+// missatges d'error clars, igual que a Contacte.
+// Versió: v1.7 — 13 juliol 2026
+// Totes les graelles de columnes fixes (gridTemplateColumns: "1fr 1fr",
+// "repeat(3, 1fr)", "repeat(4, 1fr)") s'han canviat a
+// "repeat(auto-fit, minmax(Xpx, 1fr))", perquè s'apilin automàticament en
+// pantalles estretes en lloc de comprimir-se en columnes massa fines.
 // Versió: v1.6 — 13 juliol 2026
 // CAUSA CONFIRMADA I RESOLTA del bug "Contacte en blanc": l'iframe incrustat
 // de Google Maps trencava el render en producció (motiu exacte no confirmat:
@@ -61,42 +88,44 @@ const SERVICES = [
   { icon: "🍸", label: "Gin & Tonic" },
 ];
 
+// Numeració de suites (fixada): Suite 1 = petita, Suite 2 = mitjana,
+// Suite 3 = quàdruple amb balcó privatiu (la "més especial").
 const SUITES = [
   {
-    id: "Suite 1", tipus: "Quàdruple · Balcó privatiu", color: "#b5a48a", capacitat: 4,
-    descripcio: "La Suite 1 és la més especial de la casa. Disposa d'un balcó privatiu on podeu posar cadires i gaudir d'una vista magnífica de la comarca — ideal per esmorzar, fer un vermut o sopar en privat. És l'única suite amb servei exclusiu de sopar a l'habitació (els sopars no estan inclosos a la tarifa, però els esmorzars sí).",
-    extras: ["Balcó privatiu amb vistes", "Servei de sopar a l'habitació", "Esmorzar inclòs"],
+    id: "Suite 1", tipus: "Doble", color: "#9a8a72", capacitat: 2,
+    descripcio: "Suite doble, la més petita de la casa, amb tots els elements per a una estada perfecta al Priorat. Tranquil·litat, confort i l'encant d'una casa de pedra restaurada al nucli d'El Lloar.",
+    extras: ["Esmorzar inclòs"], badge: null,
+    fotos: [
+      { color: "#9a8a72", alt: "Suite 1 — Vista general" },
+      { color: "#8a7a62", alt: "Suite 1 — Llit" },
+      { color: "#aa9a82", alt: "Suite 1 — Bany" },
+      { color: "#7a6a52", alt: "Suite 1 — Detalls" },
+      { color: "#b0a090", alt: "Suite 1 — Ambient" },
+    ]
+  },
+  {
+    id: "Suite 2", tipus: "Doble", color: "#c4b09a", capacitat: 2,
+    descripcio: "Suite doble de mida mitjana, amb caràcter rural i tots els serveis moderns. Perfecta per a una escapada en parella al cor del Priorat.",
+    extras: ["Esmorzar inclòs"], badge: null,
+    fotos: [
+      { color: "#c4b09a", alt: "Suite 2 — Vista general" },
+      { color: "#b4a08a", alt: "Suite 2 — Llit" },
+      { color: "#d4c0aa", alt: "Suite 2 — Bany" },
+      { color: "#a49080", alt: "Suite 2 — Detalls" },
+      { color: "#c8b8a0", alt: "Suite 2 — Ambient" },
+    ]
+  },
+  {
+    id: "Suite 3", tipus: "Quàdruple · Balcó privatiu", color: "#b5a48a", capacitat: 4,
+    descripcio: "La Suite 3 és la més especial de la casa. Disposa d'un balcó privatiu on podeu posar cadires i gaudir d'una vista magnífica de la comarca — ideal per esmorzar o fer un vermut. Esmorzar inclòs a la tarifa.",
+    extras: ["Balcó privatiu amb vistes", "Esmorzar inclòs"],
     badge: "La més especial",
     fotos: [
-      { color: "#b5a48a", alt: "Suite 1 — Vista general" },
-      { color: "#a89478", alt: "Suite 1 — Llit" },
-      { color: "#c4b09a", alt: "Suite 1 — Balcó" },
-      { color: "#9a8468", alt: "Suite 1 — Bany" },
-      { color: "#b0a080", alt: "Suite 1 — Detalls" },
-    ]
-  },
-  {
-    id: "Suite 2", tipus: "Doble", color: "#9a8a72", capacitat: 2,
-    descripcio: "Suite doble amb tots els elements per a una estada perfecta al Priorat. Tranquil·litat, confort i l'encant d'una casa de pedra restaurada al nucli d'El Lloar.",
-    extras: ["Esmorzar inclòs"], badge: null,
-    fotos: [
-      { color: "#9a8a72", alt: "Suite 2 — Vista general" },
-      { color: "#8a7a62", alt: "Suite 2 — Llit" },
-      { color: "#aa9a82", alt: "Suite 2 — Bany" },
-      { color: "#7a6a52", alt: "Suite 2 — Detalls" },
-      { color: "#b0a090", alt: "Suite 2 — Ambient" },
-    ]
-  },
-  {
-    id: "Suite 3", tipus: "Doble", color: "#c4b09a", capacitat: 2,
-    descripcio: "Suite doble amb caràcter rural i tots els serveis moderns. Perfecta per a una escapada en parella al cor del Priorat.",
-    extras: ["Esmorzar inclòs"], badge: null,
-    fotos: [
-      { color: "#c4b09a", alt: "Suite 3 — Vista general" },
-      { color: "#b4a08a", alt: "Suite 3 — Llit" },
-      { color: "#d4c0aa", alt: "Suite 3 — Bany" },
-      { color: "#a49080", alt: "Suite 3 — Detalls" },
-      { color: "#c8b8a0", alt: "Suite 3 — Ambient" },
+      { color: "#b5a48a", alt: "Suite 3 — Vista general" },
+      { color: "#a89478", alt: "Suite 3 — Llit" },
+      { color: "#c4b09a", alt: "Suite 3 — Balcó" },
+      { color: "#9a8468", alt: "Suite 3 — Bany" },
+      { color: "#b0a080", alt: "Suite 3 — Detalls" },
     ]
   }
 ];
@@ -109,9 +138,9 @@ const SUITE_AMENITIES = [
 ];
 
 const ROOM_IMGS = [
-  { label: "Suite 1", color: "#b5a48a" },
-  { label: "Suite 2", color: "#9a8a72" },
-  { label: "Suite 3", color: "#c4b09a" },
+  { label: "Suite 1", color: "#9a8a72" },
+  { label: "Suite 2", color: "#c4b09a" },
+  { label: "Suite 3", color: "#b5a48a" },
 ];
 const HOUSE_IMGS = [{ color: "#c8b89a" }, { color: "#baa88a" }, { color: "#d4c4a8" }];
 const ENTORN_IMGS = [{ color: "#7a9a68" }, { color: "#8aaa78" }, { color: "#6a8a58" }];
@@ -193,7 +222,7 @@ function ContactePage({ go, s, NavBar, Footer, BackBtn }) {
       <div style={{ maxWidth: 820, margin: "0 auto", padding: "2rem 2rem 3rem" }}>
         <BackBtn to="Inici" label="Tornar a l'inici" />
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, marginBottom: 48 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 32, marginBottom: 48 }}>
           <div>
             <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 500, color: "#3a2a18", marginTop: 0 }}>Envia'ns un missatge</h2>
             {!cEnviat ? (
@@ -269,7 +298,7 @@ function ContactePage({ go, s, NavBar, Footer, BackBtn }) {
 
         <div>
           <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 500, color: "#3a2a18", marginBottom: 20 }}>Com arribar</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, marginBottom: 24 }}>
             {[
               { icon: "🚗", title: "Des de Barcelona", text: "AP-2 / N-420 fins a Falset, T-710 fins a Gratallops i T-712 fins a El Lloar. Aprox. 1h 45min." },
               { icon: "🚗", title: "Des de Tarragona", text: "N-420 fins a Falset, T-710 i T-712. Aprox. 1h 15min." },
@@ -315,13 +344,21 @@ function ContactePage({ go, s, NavBar, Footer, BackBtn }) {
 // (mateix problema detectat a Contacte) — pendent de correcció en una
 // altra sessió, fora de l'abast acordat per aquest canvi.
 
+// Font única de veritat per als preus — Habitacions i Reserves llegeixen
+// sempre d'aquí, mai un número fix escrit a mà, per evitar descoordinacions.
 const TARIFES = {
-  "Suite 1": { baixa: 160, alta: 192, extra: 40 },
+  "Suite 1": { baixa: 120, alta: 144, extra: 0 },
   "Suite 2": { baixa: 120, alta: 144, extra: 0 },
-  "Suite 3": { baixa: 120, alta: 144, extra: 0 },
+  "Suite 3": { baixa: 160, alta: 192, extra: 40 },
 };
 const temporada = (mes) => (mes >= 6 && mes <= 7) ? "alta" : "baixa";
 const BLOCKED = ["2026-04-10", "2026-04-11", "2026-04-12", "2026-04-13", "2026-04-14", "2026-04-18", "2026-04-19", "2026-05-01", "2026-05-02", "2026-05-03"];
+
+// Pack Romàntic: experiència d'1 nit, exclusiva de la Suite 3. Preu fix,
+// tot inclòs (detall de benvinguda, sopar amb espelmes i vi DOQ Priorat).
+// Mai se sopa al balcó.
+const PACK_ROMANTIC_PREU = 180;
+const PACK_ROMANTIC_DESC = "Detall de benvinguda a l'habitació, sopar amb espelmes i una ampolla de vi DOQ Priorat.";
 
 function ReservesPage({ go, s, NavBar, Footer }) {
   const [any, setAny] = useState(2026);
@@ -332,8 +369,26 @@ function ReservesPage({ go, s, NavBar, Footer }) {
   const [suiteEsc, setSuiteEsc] = useState(null);
   const [pax, setPax] = useState(2);
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState({ nom: "", email: "", tel: "", notes: "" });
+  const [form, setForm] = useState({ nom: "", email: "", tel: "", notes: "", consent: false });
   const [enviat, setEnviat] = useState(false);
+  const [intentValidarReserva, setIntentValidarReserva] = useState(false);
+  const [packRomantic, setPackRomantic] = useState(false);
+  const [nitPack, setNitPack] = useState(null);
+
+  const rEmailValid = EMAIL_RE.test(form.email.trim());
+  const rValid = Boolean(form.nom.trim() && rEmailValid && form.consent && (!packRomantic || nitPack));
+  const rErrors = [];
+  if (intentValidarReserva && !enviat) {
+    if (!form.nom.trim()) rErrors.push("Falta el nom.");
+    if (!form.email.trim()) rErrors.push("Falta el correu electrònic.");
+    else if (!rEmailValid) rErrors.push("El correu electrònic no té un format vàlid.");
+    if (!form.consent) rErrors.push("Cal acceptar la Política de Privacitat per continuar.");
+    if (packRomantic && !nitPack) rErrors.push("Selecciona a quina nit vols el Pack Romàntic.");
+  }
+  const enviarReserva = () => {
+    setIntentValidarReserva(true);
+    if (rValid) setEnviat(true);
+  };
 
   const mesos = ["Gener", "Febrer", "Març", "Abril", "Maig", "Juny", "Juliol", "Agost", "Setembre", "Octubre", "Novembre", "Desembre"];
   const dies = new Date(any, mes + 1, 0).getDate();
@@ -393,9 +448,29 @@ function ReservesPage({ go, s, NavBar, Footer }) {
   const calcPreu = (suite) => {
     const t = TARIFES[suite];
     const base = t[temp] * nits;
-    const extra = (suite === "Suite 1" && pax > 2) ? t.extra * (pax - 2) * nits : 0;
+    const extra = (suite === "Suite 3" && pax > 2) ? t.extra * (pax - 2) * nits : 0;
     return base + extra;
   };
+
+  // Llista de nits concretes reservades (des de dataInici fins al dia abans de dataFi),
+  // per poder triar a quina nit s'aplica el Pack Romàntic.
+  const nitsReservades = () => {
+    if (!dataInici || !dataFi) return [];
+    const llista = [];
+    let d = new Date(dataInici);
+    const fi = new Date(dataFi);
+    while (d < fi) {
+      llista.push(d.toISOString().slice(0, 10));
+      d = new Date(d.getTime() + 86400000);
+    }
+    return llista;
+  };
+  const formatData = (key) => {
+    const [, m, d] = key.split("-");
+    return `${d} ${mesos[Number(m) - 1]}`;
+  };
+
+  const preuTotal = suiteEsc ? calcPreu(suiteEsc) + (packRomantic ? PACK_ROMANTIC_PREU : 0) : 0;
 
   const suitesDisp = ["Suite 1", "Suite 2", "Suite 3"];
 
@@ -425,7 +500,7 @@ function ReservesPage({ go, s, NavBar, Footer }) {
         </div>
 
         {step === 1 && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
             <div style={{ background: "#fff", border: "0.5px solid #e0dbd0", borderRadius: 12, padding: "1.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <button onClick={() => { if (mes === 0) { setMes(11); setAny(y => y - 1); } else setMes(m => m - 1); setDataInici(null); setDataFi(null); setAvisRang(""); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "#5a3e28" }}>‹</button>
@@ -471,7 +546,7 @@ function ReservesPage({ go, s, NavBar, Footer }) {
                 {Object.entries(TARIFES).map(([suite, t]) => (
                   <div key={suite} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "0.5px solid #e0dbd0", fontFamily: "Arial, sans-serif", fontSize: 13 }}>
                     <span style={{ color: "#666" }}>{suite}</span>
-                    <span style={{ fontWeight: 600, color: "#5a3e28" }}>{t[temp]}€<span style={{ fontWeight: 400, color: "#999" }}>/nit</span>{suite === "Suite 1" ? <span style={{ color: "#aaa", fontSize: 11 }}> +{t.extra}€/pax extra</span> : ""}</span>
+                    <span style={{ fontWeight: 600, color: "#5a3e28" }}>{t[temp]}€<span style={{ fontWeight: 400, color: "#999" }}>/nit</span>{suite === "Suite 3" ? <span style={{ color: "#aaa", fontSize: 11 }}> +{t.extra}€/pax extra</span> : ""}</span>
                   </div>
                 ))}
                 <p style={{ fontSize: 12, color: "#aaa", margin: "8px 0 0", fontFamily: "Arial, sans-serif" }}>Temporada alta: Juliol–Agost (x1.2)</p>
@@ -509,9 +584,9 @@ function ReservesPage({ go, s, NavBar, Footer }) {
                 return (
                   <div key={suite} onClick={() => setSuiteEsc(suite)} style={{ cursor: "pointer", background: "#fff", border: sel ? "2px solid #5a3e28" : "0.5px solid #e0dbd0", borderRadius: 12, padding: "1.5rem" }}>
                     <div style={{ fontFamily: "Georgia, serif", fontSize: 18, fontWeight: 600, color: "#3a2a18", marginBottom: 4 }}>{suite}</div>
-                    <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#9a8060", marginBottom: 12 }}>{suite === "Suite 1" ? "Quàdruple · Balcó privatiu" : "Doble"}</div>
+                    <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#9a8060", marginBottom: 12 }}>{suite === "Suite 3" ? "Quàdruple · Balcó privatiu" : "Doble"}</div>
                     <div style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 600, color: "#5a3e28", marginBottom: 4 }}>{preu}€</div>
-                    <div style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#aaa", marginBottom: 12 }}>total {nits} nit{nits > 1 ? "s" : ""}{suite === "Suite 1" && pax > 2 ? ` (incl. ${pax - 2} pax extra)` : ""}</div>
+                    <div style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#aaa", marginBottom: 12 }}>total {nits} nit{nits > 1 ? "s" : ""}{suite === "Suite 3" && pax > 2 ? ` (incl. ${pax - 2} pax extra)` : ""}</div>
                     <div style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#5a3e28" }}>✓ Esmorzar inclòs · Estada mín. 2 nits</div>
                     {sel && <div style={{ marginTop: 12, background: "#5a3e28", color: "#fff", textAlign: "center", padding: "6px", borderRadius: 6, fontFamily: "Arial, sans-serif", fontSize: 13, fontWeight: 600 }}>Seleccionada ✓</div>}
                   </div>
@@ -527,10 +602,39 @@ function ReservesPage({ go, s, NavBar, Footer }) {
         {step === 3 && !enviat && (
           <div style={{ maxWidth: 560, margin: "0 auto" }}>
             <button onClick={() => setStep(2)} style={{ background: "none", border: "none", color: "#5a3e28", cursor: "pointer", fontFamily: "Arial, sans-serif", fontSize: 14, marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}>← Canviar suite</button>
-            <div style={{ background: "#f0ebe2", borderRadius: 12, padding: "1rem 1.5rem", marginBottom: 24, display: "flex", justifyContent: "space-between", fontFamily: "Arial, sans-serif", fontSize: 14 }}>
-              <span style={{ color: "#5a3e28", fontWeight: 600 }}>{suiteEsc}</span>
-              <span style={{ color: "#5a3e28", fontWeight: 600 }}>{calcPreu(suiteEsc)}€</span>
+            <div style={{ background: "#f0ebe2", borderRadius: 12, padding: "1rem 1.5rem", marginBottom: 16, display: "flex", justifyContent: "space-between", fontFamily: "Arial, sans-serif", fontSize: 14 }}>
+              <span style={{ color: "#5a3e28", fontWeight: 600 }}>{suiteEsc}{packRomantic ? " + Pack Romàntic" : ""}</span>
+              <span style={{ color: "#5a3e28", fontWeight: 600 }}>{preuTotal}€</span>
             </div>
+
+            {suiteEsc === "Suite 3" && (
+              <div style={{ marginBottom: 20, padding: "12px", background: "#fdf8f0", borderRadius: 8, border: "0.5px solid #e8e0d0" }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <input type="checkbox" id="pack-romantic" checked={packRomantic} onChange={e => { setPackRomantic(e.target.checked); if (!e.target.checked) setNitPack(null); }} style={{ marginTop: 2, flexShrink: 0 }} />
+                  <label htmlFor="pack-romantic" style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#3a2a18", lineHeight: 1.6, cursor: "pointer" }}>
+                    <strong>💐 Afegir Pack Romàntic (+{PACK_ROMANTIC_PREU}€)</strong><br />
+                    <span style={{ fontSize: 12, color: "#666" }}>{PACK_ROMANTIC_DESC}</span>
+                  </label>
+                </div>
+                {packRomantic && (
+                  <div style={{ marginTop: 12 }}>
+                    <label style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#666", display: "block", marginBottom: 4 }}>Per a quina nit?</label>
+                    {nitsReservades().length > 1 ? (
+                      <select value={nitPack || ""} onChange={e => setNitPack(e.target.value)} style={{ width: "100%", padding: "8px", border: "0.5px solid #e0dbd0", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 13 }}>
+                        <option value="" disabled>Tria una nit</option>
+                        {nitsReservades().map(k => <option key={k} value={k}>{formatData(k)}</option>)}
+                      </select>
+                    ) : (
+                      <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#3a2a18" }}>
+                        {nitsReservades()[0] ? formatData(nitsReservades()[0]) : "—"}
+                        {nitsReservades()[0] && nitPack !== nitsReservades()[0] && setNitPack(nitsReservades()[0])}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {[["Nom complet", "nom", "text"], ["Email", "email", "email"], ["Telèfon", "tel", "tel"]].map(([lbl, field, type]) => (
               <div key={field} style={{ marginBottom: 12 }}>
                 <label style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#666", display: "block", marginBottom: 4 }}>{lbl}</label>
@@ -545,7 +649,20 @@ function ReservesPage({ go, s, NavBar, Footer }) {
               <strong style={{ color: "#3a2a18" }}>Política de cancel·lació:</strong> Cancel·lació gratuïta fins a 14 dies abans de l'entrada. Passats els 14 dies, la reserva no és reemborsable.<br />
               <strong style={{ color: "#3a2a18" }}>Condicions:</strong> Check-in a partir de les 15h. Check-out abans de les 11h. Estada mínima 2 nits.
             </div>
-            <button onClick={() => setEnviat(true)} style={{ background: "#5a3e28", color: "#fff", border: "none", width: "100%", padding: "14px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 15, cursor: "pointer", fontWeight: 600 }}>Enviar sol·licitud de reserva</button>
+            <div style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 16, padding: "12px", background: "#fdf8f0", borderRadius: 8, border: "0.5px solid #e8e0d0" }}>
+              <input type="checkbox" id="consent-reserva" checked={form.consent} onChange={e => setForm({ ...form, consent: e.target.checked })} style={{ marginTop: 2, flexShrink: 0 }} />
+              <label htmlFor="consent-reserva" style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#666", lineHeight: 1.6, cursor: "pointer" }}>
+                He llegit i accepto la <span style={{ color: "#5a3e28", textDecoration: "underline", cursor: "pointer" }} onClick={() => go("Privacitat")}>Política de Privacitat</span>. Accepto que les meves dades siguin tractades per gestionar aquesta sol·licitud de reserva (Art. 6.1.b RGPD).
+              </label>
+            </div>
+            {rErrors.length > 0 && (
+              <div style={{ marginBottom: 16, padding: "10px 14px", background: "#fdeceb", border: "0.5px solid #e8b0aa", borderRadius: 8 }}>
+                {rErrors.map(e => (
+                  <div key={e} style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#a03028" }}>• {e}</div>
+                ))}
+              </div>
+            )}
+            <button onClick={enviarReserva} aria-disabled={!rValid} style={{ background: rValid ? "#5a3e28" : "#ccc", color: "#fff", border: "none", width: "100%", padding: "14px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 15, cursor: "pointer", fontWeight: 600 }}>Enviar sol·licitud de reserva</button>
           </div>
         )}
 
@@ -554,10 +671,10 @@ function ReservesPage({ go, s, NavBar, Footer }) {
             <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
             <h2 style={{ fontFamily: "Georgia, serif", fontSize: 24, color: "#3a2a18", fontWeight: 500 }}>Sol·licitud enviada!</h2>
             <p style={{ fontFamily: "Arial, sans-serif", fontSize: 15, color: "#666", lineHeight: 1.8 }}>
-              Hem rebut la teva sol·licitud per <strong>{suiteEsc}</strong>.<br />
+              Hem rebut la teva sol·licitud per <strong>{suiteEsc}</strong>{packRomantic ? <> amb <strong>Pack Romàntic</strong> per la nit del <strong>{nitPack ? formatData(nitPack) : ""}</strong></> : ""}.<br />
               Et contactarem en menys de 24 hores a <strong>{form.email}</strong> per confirmar la reserva i les instruccions de pagament.
             </p>
-            <button onClick={() => { setStep(1); setDataInici(null); setDataFi(null); setSuiteEsc(null); setEnviat(false); setForm({ nom: "", email: "", tel: "", notes: "" }); go("Inici"); }} style={{ background: "#5a3e28", color: "#fff", border: "none", padding: "12px 32px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 14, cursor: "pointer", marginTop: 16 }}>Tornar a l'inici</button>
+            <button onClick={() => { setStep(1); setDataInici(null); setDataFi(null); setSuiteEsc(null); setEnviat(false); setIntentValidarReserva(false); setForm({ nom: "", email: "", tel: "", notes: "", consent: false }); setPackRomantic(false); setNitPack(null); go("Inici"); }} style={{ background: "#5a3e28", color: "#fff", border: "none", padding: "12px 32px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 14, cursor: "pointer", marginTop: 16 }}>Tornar a l'inici</button>
           </div>
         )}
       </div>
@@ -602,7 +719,7 @@ function AppInner() {
 
   const NavBar = () => (
     <nav style={s.nav}>
-      <span style={s.logo} onClick={() => { go("Inici"); setMenuObert(false); }}>Casa Rural Bonavista</span>
+      <img src="/logo.png" alt="Casa Rural Bonavista" onClick={() => { go("Inici"); setMenuObert(false); }} style={{ height: 34, cursor: "pointer", display: "block" }} />
       <div style={{ display: "flex", gap: 2 }} className="nav-desktop">
         {NAV.map(n => <button key={n} style={s.navBtn(page === n)} onClick={() => go(n)}>{n}</button>)}
       </div>
@@ -623,6 +740,7 @@ function AppInner() {
 
   const Footer = () => (
     <div style={{ background: "#3a2a18", color: "#c8b89a", textAlign: "center", padding: "2rem", fontFamily: "Arial, sans-serif", marginTop: "3rem" }}>
+      <img src="/logo.png" alt="Casa Rural Bonavista" style={{ height: 44, margin: "0 0 12px", borderRadius: 6 }} />
       <p style={{ margin: "0 0 4px", fontWeight: 600, fontSize: 15, letterSpacing: "0.05em" }}>CASA RURAL BONAVISTA</p>
       <p style={{ margin: "0 0 8px", opacity: 0.6, fontSize: 13 }}>El Lloar · Priorat · casaruralbonavista.cat</p>
       <div style={{ display: "flex", justifyContent: "center", gap: 16, fontSize: 12, opacity: 0.7 }}>
@@ -681,7 +799,8 @@ function AppInner() {
                   </div>
                   <div style={{ padding: "1.25rem" }}>
                     <div style={{ fontFamily: "Georgia, serif", fontSize: 20, fontWeight: 600, color: "#3a2a18", marginBottom: 4 }}>{suite.id}</div>
-                    <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#9a8060", marginBottom: 12 }}>{suite.tipus} · {suite.capacitat} persones</div>
+                    <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#9a8060", marginBottom: 4 }}>{suite.tipus} · {suite.capacitat} persones</div>
+                    <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#5a3e28", fontWeight: 600, marginBottom: 12 }}>Des de {TARIFES[suite.id].baixa}€ <span style={{ color: "#9a8060", fontWeight: 400 }}>/nit</span></div>
                     <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#5a3e28", fontWeight: 600 }}>Veure detalls →</div>
                   </div>
                 </div>
@@ -718,7 +837,7 @@ function AppInner() {
           <div style={{ marginBottom: 32 }}>
             <Galeria fotos={suiteActual.fotos} />
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
             <div>
               <h3 style={{ fontFamily: "Georgia, serif", fontSize: 20, fontWeight: 500, color: "#3a2a18", marginTop: 0 }}>Descripció</h3>
               <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666", lineHeight: 1.8 }}>{suiteActual.descripcio}</p>
@@ -733,7 +852,7 @@ function AppInner() {
             </div>
             <div>
               <h3 style={{ fontFamily: "Georgia, serif", fontSize: 20, fontWeight: 500, color: "#3a2a18", marginTop: 0 }}>Equipament</h3>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
                 {SUITE_AMENITIES.map(a => (
                   <div key={a.label} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "Arial, sans-serif", fontSize: 13, color: "#666" }}>
                     <span style={{ fontSize: 18 }}>{a.icon}</span> {a.label}
@@ -742,13 +861,18 @@ function AppInner() {
               </div>
             </div>
           </div>
-          <div style={{ marginTop: 32, background: "#f0ebe2", borderRadius: 12, padding: "1.5rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ marginTop: 32, background: "#f0ebe2", borderRadius: 12, padding: "1.5rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
             <div>
-              <div style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 600, color: "#3a2a18" }}>Des de 95€ <span style={{ fontSize: 14, fontWeight: 400, color: "#999", fontFamily: "Arial, sans-serif" }}>/nit</span></div>
+              <div style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 600, color: "#3a2a18" }}>Des de {TARIFES[suiteActual.id].baixa}€ <span style={{ fontSize: 14, fontWeight: 400, color: "#999", fontFamily: "Arial, sans-serif" }}>/nit</span></div>
               <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#9a8060" }}>Esmorzar inclòs · Estada mínima 2 nits</div>
             </div>
             <button onClick={() => go("Reserves")} style={{ background: "#5a3e28", color: "#fff", border: "none", padding: "12px 32px", borderRadius: 8, fontSize: 15, cursor: "pointer", fontFamily: "Arial, sans-serif", fontWeight: 600 }}>Reservar</button>
           </div>
+          {suiteActual.id === "Suite 3" && (
+            <div style={{ marginTop: 16, background: "#fdf8f0", border: "0.5px solid #e8e0d0", borderRadius: 12, padding: "1rem 1.5rem", fontFamily: "Arial, sans-serif", fontSize: 13, color: "#7a5a3a", lineHeight: 1.7 }}>
+              💐 <strong>Pack Romàntic disponible amb aquesta suite</strong> — {PACK_ROMANTIC_DESC} +{PACK_ROMANTIC_PREU}€ (1 nit). Es tria a l'últim pas de la reserva.
+            </div>
+          )}
         </div>
         <Footer />
       </div>
@@ -778,7 +902,7 @@ function AppInner() {
           <div style={{ marginBottom: 40 }}>
             <Galeria fotos={FOTOS_CASA} />
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, marginBottom: 40 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 32, marginBottom: 40 }}>
             <div>
               <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 500, color: "#3a2a18", marginTop: 0 }}>La Casa</h2>
               <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666", lineHeight: 1.9 }}>Casa de pedra restaurada amb respecte pels materials originals — les vigues de fusta, la pedra vista i els terres de rajola tradicional conviuen amb totes les comoditats modernes.</p>
@@ -992,7 +1116,7 @@ function AppInner() {
       <div style={{ background: "#faf8f4", padding: "3rem 2rem 0" }}>
         <h2 style={{ fontFamily: "Georgia, serif", fontSize: 28, fontWeight: 500, color: "#3a2a18", textAlign: "center", margin: "0 0 0.4rem" }}>Habitacions</h2>
         <p style={{ textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 14, color: "#999", margin: "0 0 2rem" }}>2 suites dobles · 1 suite quàdruple · Màx. 8 persones</p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, maxWidth: 900, margin: "0 auto 3rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 16, maxWidth: 900, margin: "0 auto 3rem" }}>
           {ROOM_IMGS.map((r) => (
             <div key={r.label} onClick={() => go(r.label)} style={{ cursor: "pointer", position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "2/3", background: r.color }}>
               <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.28)" }} />
@@ -1012,7 +1136,7 @@ function AppInner() {
       <div style={{ background: "#f0ebe2", padding: "2rem 2rem 0" }}>
         <h2 style={{ fontFamily: "Georgia, serif", fontSize: 28, fontWeight: 500, color: "#3a2a18", textAlign: "center", margin: "0 0 0.4rem" }}>La Casa</h2>
         <p style={{ textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 14, color: "#9a8060", margin: "0 0 2rem" }}>Casa de pedra restaurada al nucli d'El Lloar</p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, maxWidth: 900, margin: "0 auto 3rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 16, maxWidth: 900, margin: "0 auto 3rem" }}>
           {HOUSE_IMGS.map((r, i) => (
             <div key={i} onClick={() => go("La Casa")} style={{ cursor: "pointer", position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "4/3", background: r.color }}>
               <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.15)" }} />
@@ -1031,7 +1155,7 @@ function AppInner() {
       <div style={{ background: "#e8f0e0", padding: "2rem 2rem 0" }}>
         <h2 style={{ fontFamily: "Georgia, serif", fontSize: 28, fontWeight: 500, color: "#2a3a20", textAlign: "center", margin: "0 0 0.4rem" }}>L'Entorn</h2>
         <p style={{ textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 14, color: "#6a8060", margin: "0 0 2rem" }}>Vinyes, gorgs, cellers i paisatge de pissarra</p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, maxWidth: 900, margin: "0 auto 3rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 16, maxWidth: 900, margin: "0 auto 3rem" }}>
           {ENTORN_IMGS.map((r, i) => (
             <div key={i} onClick={() => go("L'Entorn")} style={{ cursor: "pointer", position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "4/3", background: r.color }}>
               <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.15)" }} />
@@ -1050,7 +1174,7 @@ function AppInner() {
       <div style={{ background: "#fdf8f0", padding: "2rem 2rem 3.5rem" }}>
         <h2 style={{ fontFamily: "Georgia, serif", fontSize: 28, fontWeight: 500, color: "#3a2a18", textAlign: "center", margin: "0 0 0.4rem" }}>Serveis</h2>
         <p style={{ textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 14, color: "#9a8060", margin: "0 0 2.5rem" }}>Tot el que necessites per gaudir al màxim</p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, maxWidth: 820, margin: "0 auto" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16, maxWidth: 820, margin: "0 auto" }}>
           {SERVICES.map(sv => (
             <div key={sv.label} style={{ background: "#fff", border: "0.5px solid #e8e0d0", borderRadius: 12, padding: "1.25rem 0.75rem", textAlign: "center" }}>
               <div style={{ fontSize: 28, marginBottom: 8 }}>{sv.icon}</div>
