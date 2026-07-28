@@ -1,4 +1,15 @@
 // Casa Rural Bonavista — App.jsx
+// Versió: v2.3 — 21 juliol 2026
+// - A la targeta de Tarifes de Reserves (pas 1), el preu de la Suite 3 ara
+//   mostra "182€/nit [2 persones] +40€/pax extra" en lloc de només
+//   "182€/nit +40€/pax extra", per deixar clar que el preu base inclou
+//   fins a 2 persones i que el suplement és només per als extres.
+// PENDENT: api/reserva.js s'havia pujat dins de src/api/ — Vercel només
+// detecta funcions serverless dins d'una carpeta "api" a l'ARREL del
+// projecte (mateix nivell que src/, public/ i package.json), no dins de
+// src/. Cal moure el fitxer a api/reserva.js (arrel) perquè l'endpoint
+// funcioni; si es queda dins de src/, el formulari de Reserves seguirà
+// donant error en enviar.
 // Versió: v2.2 — 21 juliol 2026
 // - Backend real per a Reserves: el formulari ja no es limita a canviar
 //   d'estat local — ara fa POST a /api/reserva (nova funció serverless de
@@ -565,7 +576,7 @@ function ReservesPage({ go, s, NavBar, Footer }) {
                 {Object.entries(TARIFES).map(([suite, t]) => (
                   <div key={suite} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "0.5px solid #e0dbd0", fontFamily: "Arial, sans-serif", fontSize: 13 }}>
                     <span style={{ color: "#666" }}>{suite}</span>
-                    <span style={{ fontWeight: 600, color: "#5a3e28" }}>{t.preu}€<span style={{ fontWeight: 400, color: "#999" }}>/nit</span>{suite === "Suite 3" ? <span style={{ color: "#aaa", fontSize: 11 }}> +{t.extra}€/pax extra</span> : ""}</span>
+                    <span style={{ fontWeight: 600, color: "#5a3e28" }}>{t.preu}€<span style={{ fontWeight: 400, color: "#999" }}>/nit</span>{suite === "Suite 3" ? <span style={{ color: "#aaa", fontSize: 11 }}> [2 persones] +{t.extra}€/pax extra</span> : ""}</span>
                   </div>
                 ))}
               </div>
