@@ -1,4 +1,25 @@
 // Casa Rural Bonavista — App.jsx
+// Versió: v2.4 — 21 juliol 2026
+// - Fix: al pas "2. Suite" de Reserves, les targetes ara es filtren per
+//   capacitat segons el nombre de persones triat (Suite 1 i 2 només si
+//   pax ≤ 2; Suite 3 sempre). Abans es mostraven sempre les 3 encara que
+//   la capacitat no hi arribés.
+// - Pack Romàntic: deixa de ser un afegit exclusiu de la Suite 3 dins del
+//   pas 3 de Reserves (casella + selector de nit, ara eliminats). Deixa
+//   de ser exclusiu de la Suite 3 — ara les 3 suites l'ofereixen amb preu
+//   combinat (base + 180€: 307/307/362€).
+// - Nova pestanya "Pack Romàntic" al menú (3a posició, entre Habitacions
+//   i La Casa): capçalera+imatge (pendent de definir)+text descriptiu, i
+//   un calendari amb el mateix format visual que el de Reserves però que
+//   només permet triar 1 nit (clic únic sobre un dia disponible selecciona
+//   automàticament aquell dia i l'endemà; no es pot triar un dia si
+//   l'endemà ja està bloquejat).
+// - En confirmar la data a la nova pestanya, es reenruta cap al pas
+//   "2. Suite" de Reserves (ja establert), amb les dates i pax=2 ja fixats
+//   i els preus de suite mostrant-hi el combinat. Si l'usuari torna enrere
+//   a "Canviar dates" des d'aquí, se surt del mode Pack Romàntic.
+// - Eliminat el bloc informatiu de Pack Romàntic a la pàgina individual de
+//   la Suite 3 (la informació ara viu només a la nova pestanya).
 // Versió: v2.3 — 21 juliol 2026
 // - A la targeta de Tarifes de Reserves (pas 1), el preu de la Suite 3 ara
 //   mostra "182€/nit [2 persones] +40€/pax extra" en lloc de només
@@ -80,7 +101,7 @@
 // plural "persona/persones". v1.1 va introduir la selecció de dates per
 // rang a Reserves. v1.0 va corregir el formulari de Contacte (enviament
 // mailto, honeypot, validació d'email).
-import { useState, Component } from "react";
+import { useState, useEffect, Component } from "react";
 // Xarxa de seguretat: si qualsevol pàgina llança un error durant el render,
 // React buida tot #root per defecte (sense menú ni contingut — pantalla en blanc).
 // Aquest ErrorBoundary intercepta l'error i el mostra en pantalla, per poder
@@ -111,7 +132,7 @@ class ErrorBoundary extends Component {
     return this.props.children;
   }
 }
-const NAV = ["Inici", "Habitacions", "La Casa", "L'Entorn", "Reserves", "Contacte"];
+const NAV = ["Inici", "Habitacions", "Pack Romàntic", "La Casa", "L'Entorn", "Reserves", "Contacte"];
 const SERVICES = [
   { icon: "❄️", label: "Aire condicionat" },
   { icon: "🔥", label: "Calefacció" },
@@ -372,36 +393,42 @@ const TARIFES = {
   "Suite 3": { preu: 182, extra: 40 },
 };
 const BLOCKED = ["2026-04-10", "2026-04-11", "2026-04-12", "2026-04-13", "2026-04-14", "2026-04-18", "2026-04-19", "2026-05-01", "2026-05-02", "2026-05-03"];
-// Pack Romàntic: experiència d'1 nit, exclusiva de la Suite 3. Preu fix,
-// tot inclòs (detall de benvinguda, sopar amb espelmes i vi DOQ Priorat).
+// Pack Romàntic: experiència d'1 nit, disponible per a les 3 suites, preu
+// combinat (tarifa base + PACK_ROMANTIC_PREU). Es reserva des de la
+// pestanya "Pack Romàntic" (calendari propi, només 1 nit), que reenruta
+// cap al pas "2. Suite" de Reserves ja amb el mode Pack Romàntic actiu.
 // Mai se sopa al balcó.
 const PACK_ROMANTIC_PREU = 180;
-const PACK_ROMANTIC_DESC = "Detall de benvinguda a l'habitació, sopar amb espelmes i una ampolla de vi DOQ Priorat.";
-function ReservesPage({ go, s, NavBar, Footer }) {
+function ReservesPage({ go, s, NavBar, Footer, packSeed, onConsumSeed }) {
   const [any, setAny] = useState(2026);
   const [mes, setMes] = useState(3);
-  const [dataInici, setDataInici] = useState(null);
-  const [dataFi, setDataFi] = useState(null);
+  const [dataInici, setDataInici] = useState(packSeed ? packSeed.dataInici : null);
+  const [dataFi, setDataFi] = useState(packSeed ? packSeed.dataFi : null);
   const [avisRang, setAvisRang] = useState("");
   const [suiteEsc, setSuiteEsc] = useState(null);
   const [pax, setPax] = useState(2);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(packSeed ? 2 : 1);
   const [form, setForm] = useState({ nom: "", email: "", tel: "", notes: "", consent: false });
   const [enviat, setEnviat] = useState(false);
   const [enviantReserva, setEnviantReserva] = useState(false);
   const [errorEnviamentReserva, setErrorEnviamentReserva] = useState("");
   const [intentValidarReserva, setIntentValidarReserva] = useState(false);
-  const [packRomantic, setPackRomantic] = useState(false);
-  const [nitPack, setNitPack] = useState(null);
+  const [packRomantic, setPackRomantic] = useState(Boolean(packSeed));
+  // Consumeix la llavor de Pack Romàntic un sol cop, en muntar el component,
+  // perquè una visita posterior a Reserves (sense passar per la pestanya
+  // Pack Romàntic) no torni a activar el mode per error.
+  useEffect(() => {
+    if (packSeed && onConsumSeed) onConsumSeed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const rEmailValid = EMAIL_RE.test(form.email.trim());
-  const rValid = Boolean(form.nom.trim() && rEmailValid && form.consent && (!packRomantic || nitPack));
+  const rValid = Boolean(form.nom.trim() && rEmailValid && form.consent);
   const rErrors = [];
   if (intentValidarReserva && !enviat) {
     if (!form.nom.trim()) rErrors.push("Falta el nom.");
     if (!form.email.trim()) rErrors.push("Falta el correu electrònic.");
     else if (!rEmailValid) rErrors.push("El correu electrònic no té un format vàlid.");
     if (!form.consent) rErrors.push("Cal acceptar la Política de Privacitat per continuar.");
-    if (packRomantic && !nitPack) rErrors.push("Selecciona a quina nit vols el Pack Romàntic.");
   }
   const enviarReserva = async () => {
     setIntentValidarReserva(true);
@@ -420,7 +447,7 @@ function ReservesPage({ go, s, NavBar, Footer }) {
           pax,
           preuTotal,
           packRomantic,
-          nitPack,
+          nitPack: packRomantic ? dataInici : null,
           nom: form.nom,
           email: form.email,
           tel: form.tel,
@@ -488,25 +515,12 @@ function ReservesPage({ go, s, NavBar, Footer }) {
     const extra = (suite === "Suite 3" && pax > 2) ? t.extra * (pax - 2) * nits : 0;
     return base + extra;
   };
-  // Llista de nits concretes reservades (des de dataInici fins al dia abans de dataFi),
-  // per poder triar a quina nit s'aplica el Pack Romàntic.
-  const nitsReservades = () => {
-    if (!dataInici || !dataFi) return [];
-    const llista = [];
-    let d = new Date(dataInici);
-    const fi = new Date(dataFi);
-    while (d < fi) {
-      llista.push(d.toISOString().slice(0, 10));
-      d = new Date(d.getTime() + 86400000);
-    }
-    return llista;
-  };
   const formatData = (key) => {
     const [, m, d] = key.split("-");
     return `${d} ${mesos[Number(m) - 1]}`;
   };
   const preuTotal = suiteEsc ? calcPreu(suiteEsc) + (packRomantic ? PACK_ROMANTIC_PREU : 0) : 0;
-  const suitesDisp = ["Suite 1", "Suite 2", "Suite 3"];
+  const suitesDisp = SUITES.filter(su => su.capacitat >= pax).map(su => su.id);
   return (
     <div style={s.wrap}>
       <NavBar />
@@ -580,6 +594,10 @@ function ReservesPage({ go, s, NavBar, Footer }) {
                   </div>
                 ))}
               </div>
+              <button onClick={() => go("Pack Romàntic")} style={{ display: "block", width: "100%", textAlign: "left", background: "#fdf8f0", border: "0.5px solid #e8e0d0", borderRadius: 12, padding: "1rem 1.25rem", marginTop: 16, cursor: "pointer", fontFamily: "Arial, sans-serif" }}>
+                <span style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#7a5a3a" }}>💐 Pack Romàntic — una nit especial en parella</span>
+                <span style={{ display: "block", fontSize: 12, color: "#9a8060", marginTop: 4 }}>Descobreix l'experiència exclusiva d'una nit →</span>
+              </button>
               {nits > 0 && (
                 <div style={{ background: "#fff", border: "0.5px solid #e0dbd0", borderRadius: 12, padding: "1.5rem" }}>
                   <div style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666", marginBottom: 12 }}>
@@ -600,18 +618,18 @@ function ReservesPage({ go, s, NavBar, Footer }) {
         )}
         {step === 2 && (
           <div>
-            <button onClick={() => setStep(1)} style={{ background: "none", border: "none", color: "#5a3e28", cursor: "pointer", fontFamily: "Arial, sans-serif", fontSize: 14, marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}>← Canviar dates</button>
+            <button onClick={() => { setStep(1); setPackRomantic(false); }} style={{ background: "none", border: "none", color: "#5a3e28", cursor: "pointer", fontFamily: "Arial, sans-serif", fontSize: 14, marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}>← Canviar dates</button>
             <div style={{ background: "#f0ebe2", borderRadius: 12, padding: "1rem 1.5rem", marginBottom: 24, fontFamily: "Arial, sans-serif", fontSize: 14, color: "#5a3e28" }}>
-              📅 {nits} nit{nits > 1 ? "s" : ""} · {pax} {pax > 1 ? "persones" : "persona"}
+              📅 {nits} nit{nits > 1 ? "s" : ""} · {pax} {pax > 1 ? "persones" : "persona"}{packRomantic ? " · 💐 Pack Romàntic" : ""}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 20 }}>
               {suitesDisp.map(suite => {
-                const preu = calcPreu(suite);
+                const preu = calcPreu(suite) + (packRomantic ? PACK_ROMANTIC_PREU : 0);
                 const sel = suiteEsc === suite;
                 return (
                   <div key={suite} onClick={() => setSuiteEsc(suite)} style={{ cursor: "pointer", background: "#fff", border: sel ? "2px solid #5a3e28" : "0.5px solid #e0dbd0", borderRadius: 12, padding: "1.5rem" }}>
                     <div style={{ fontFamily: "Georgia, serif", fontSize: 18, fontWeight: 600, color: "#3a2a18", marginBottom: 4 }}>{suite}</div>
-                    <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#9a8060", marginBottom: 12 }}>{suite === "Suite 3" ? "Quàdruple · Balcó privatiu" : "Doble"}</div>
+                    <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#9a8060", marginBottom: 12 }}>{packRomantic ? "💐 Pack Romàntic inclòs" : suite === "Suite 3" ? "Quàdruple · Balcó privatiu" : "Doble"}</div>
                     <div style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 600, color: "#5a3e28", marginBottom: 4 }}>{preu}€</div>
                     <div style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#aaa", marginBottom: 12 }}>total {nits} nit{nits > 1 ? "s" : ""}{suite === "Suite 3" && pax > 2 ? ` (incl. ${pax - 2} pax extra)` : ""}</div>
                     <div style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#5a3e28" }}>✓ Esmorzar inclòs · Estada mín. 2 nits</div>
@@ -621,7 +639,7 @@ function ReservesPage({ go, s, NavBar, Footer }) {
               })}
             </div>
             {suiteEsc && (
-              <button onClick={() => setStep(3)} style={{ background: "#5a3e28", color: "#fff", border: "none", width: "100%", padding: "14px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 15, cursor: "pointer", fontWeight: 600, marginTop: 24 }}>Continuar amb {suiteEsc} — {calcPreu(suiteEsc)}€ →</button>
+              <button onClick={() => setStep(3)} style={{ background: "#5a3e28", color: "#fff", border: "none", width: "100%", padding: "14px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 15, cursor: "pointer", fontWeight: 600, marginTop: 24 }}>Continuar amb {suiteEsc} — {calcPreu(suiteEsc) + (packRomantic ? PACK_ROMANTIC_PREU : 0)}€ →</button>
             )}
           </div>
         )}
@@ -632,33 +650,6 @@ function ReservesPage({ go, s, NavBar, Footer }) {
               <span style={{ color: "#5a3e28", fontWeight: 600 }}>{suiteEsc}{packRomantic ? " + Pack Romàntic" : ""}</span>
               <span style={{ color: "#5a3e28", fontWeight: 600 }}>{preuTotal}€</span>
             </div>
-            {suiteEsc === "Suite 3" && (
-              <div style={{ marginBottom: 20, padding: "12px", background: "#fdf8f0", borderRadius: 8, border: "0.5px solid #e8e0d0" }}>
-                <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                  <input type="checkbox" id="pack-romantic" checked={packRomantic} onChange={e => { setPackRomantic(e.target.checked); if (!e.target.checked) setNitPack(null); }} style={{ marginTop: 2, flexShrink: 0 }} />
-                  <label htmlFor="pack-romantic" style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#3a2a18", lineHeight: 1.6, cursor: "pointer" }}>
-                    <strong>💐 Afegir Pack Romàntic (+{PACK_ROMANTIC_PREU}€)</strong><br />
-                    <span style={{ fontSize: 12, color: "#666" }}>{PACK_ROMANTIC_DESC}</span>
-                  </label>
-                </div>
-                {packRomantic && (
-                  <div style={{ marginTop: 12 }}>
-                    <label style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#666", display: "block", marginBottom: 4 }}>Per a quina nit?</label>
-                    {nitsReservades().length > 1 ? (
-                      <select value={nitPack || ""} onChange={e => setNitPack(e.target.value)} style={{ width: "100%", padding: "8px", border: "0.5px solid #e0dbd0", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 13 }}>
-                        <option value="" disabled>Tria una nit</option>
-                        {nitsReservades().map(k => <option key={k} value={k}>{formatData(k)}</option>)}
-                      </select>
-                    ) : (
-                      <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#3a2a18" }}>
-                        {nitsReservades()[0] ? formatData(nitsReservades()[0]) : "—"}
-                        {nitsReservades()[0] && nitPack !== nitsReservades()[0] && setNitPack(nitsReservades()[0])}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
             {[["Nom complet", "nom", "text"], ["Email", "email", "email"], ["Telèfon", "tel", "tel"]].map(([lbl, field, type]) => (
               <div key={field} style={{ marginBottom: 12 }}>
                 <label style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#666", display: "block", marginBottom: 4 }}>{lbl}</label>
@@ -699,12 +690,140 @@ function ReservesPage({ go, s, NavBar, Footer }) {
             <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
             <h2 style={{ fontFamily: "Georgia, serif", fontSize: 24, color: "#3a2a18", fontWeight: 500 }}>Sol·licitud enviada!</h2>
             <p style={{ fontFamily: "Arial, sans-serif", fontSize: 15, color: "#666", lineHeight: 1.8 }}>
-              Hem rebut la teva sol·licitud per <strong>{suiteEsc}</strong>{packRomantic ? <> amb <strong>Pack Romàntic</strong> per la nit del <strong>{nitPack ? formatData(nitPack) : ""}</strong></> : ""}.<br />
+              Hem rebut la teva sol·licitud per <strong>{suiteEsc}</strong>{packRomantic ? <> amb <strong>Pack Romàntic</strong> per la nit del <strong>{dataInici ? formatData(dataInici) : ""}</strong></> : ""}.<br />
               Et contactarem en menys de 24 hores a <strong>{form.email}</strong> per confirmar la reserva i les instruccions de pagament.
             </p>
-            <button onClick={() => { setStep(1); setDataInici(null); setDataFi(null); setSuiteEsc(null); setEnviat(false); setIntentValidarReserva(false); setErrorEnviamentReserva(""); setForm({ nom: "", email: "", tel: "", notes: "", consent: false }); setPackRomantic(false); setNitPack(null); go("Inici"); }} style={{ background: "#5a3e28", color: "#fff", border: "none", padding: "12px 32px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 14, cursor: "pointer", marginTop: 16 }}>Tornar a l'inici</button>
+            <button onClick={() => { setStep(1); setDataInici(null); setDataFi(null); setSuiteEsc(null); setEnviat(false); setIntentValidarReserva(false); setErrorEnviamentReserva(""); setForm({ nom: "", email: "", tel: "", notes: "", consent: false }); setPackRomantic(false); go("Inici"); }} style={{ background: "#5a3e28", color: "#fff", border: "none", padding: "12px 32px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 14, cursor: "pointer", marginTop: 16 }}>Tornar a l'inici</button>
           </div>
         )}
+      </div>
+      <Footer />
+    </div>
+  );
+}
+// ─── MÒDUL: PACK ROMÀNTIC ───────────────────────────────────────────────
+// Component independent, pel mateix motiu que ContactePage/ReservesPage.
+// Calendari amb el mateix format visual que el de Reserves, però només
+// permet triar 1 nit: un sol clic sobre un dia disponible selecciona
+// automàticament aquell dia (entrada) i l'endemà (sortida). No es pot
+// triar un dia si l'endemà ja està bloquejat. En confirmar, es reenruta
+// cap al pas "2. Suite" de Reserves via onIniciarReserva (packSeed).
+function PackRomanticPage({ go, s, NavBar, Footer, BackBtn, onIniciarReserva }) {
+  const [any, setAny] = useState(2026);
+  const [mes, setMes] = useState(3);
+  const [dataInici, setDataInici] = useState(null);
+  const [dataFi, setDataFi] = useState(null);
+  const [avis, setAvis] = useState("");
+  const mesos = ["Gener", "Febrer", "Març", "Abril", "Maig", "Juny", "Juliol", "Agost", "Setembre", "Octubre", "Novembre", "Desembre"];
+  const dies = new Date(any, mes + 1, 0).getDate();
+  const primer = (new Date(any, mes, 1).getDay() + 6) % 7;
+  const toKey = (d) => `${any}-${String(mes + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  const toggleDia = (d) => {
+    const k = toKey(d);
+    if (BLOCKED.includes(k)) return;
+    const seguent = new Date(k);
+    seguent.setDate(seguent.getDate() + 1);
+    const kSeguent = seguent.toISOString().slice(0, 10);
+    if (BLOCKED.includes(kSeguent)) {
+      setAvis("L'endemà d'aquest dia no està disponible. Tria un altre dia d'entrada.");
+      setDataInici(null);
+      setDataFi(null);
+      return;
+    }
+    setAvis("");
+    setDataInici(k);
+    setDataFi(kSeguent);
+  };
+  const formatData = (key) => {
+    const [, m, d] = key.split("-");
+    return `${d} ${mesos[Number(m) - 1]}`;
+  };
+  const continuar = () => {
+    onIniciarReserva({ dataInici, dataFi });
+    go("Reserves");
+  };
+  return (
+    <div style={s.wrap}>
+      <NavBar />
+      <div style={{ background: "#5a3e28", minHeight: 200, display: "flex", alignItems: "flex-end", padding: "0 2rem 2rem", position: "relative" }}>
+        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)" }} />
+        <div style={{ position: "relative", zIndex: 2 }}>
+          <h1 style={{ fontFamily: "Georgia, serif", fontSize: 36, color: "#fff", margin: 0 }}>Pack Romàntic</h1>
+          <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#f0e8d8", margin: "4px 0 0" }}>Una nit dolça al cor del Priorat</p>
+        </div>
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}>
+          <svg viewBox="0 0 1440 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ display: "block", width: "100%", height: 40 }}>
+            <path d="M0,10 C400,40 1000,0 1440,25 L1440,40 L0,40 Z" fill="#faf8f4" />
+          </svg>
+        </div>
+      </div>
+      <div style={{ maxWidth: 820, margin: "0 auto", padding: "2rem 2rem 3rem" }}>
+        <BackBtn to="Inici" label="Tornar a l'inici" />
+        <div style={{ aspectRatio: "16/9", background: "#b08a92", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 32 }}>
+          <span style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)" }}>Imatge pendent de definir</span>
+        </div>
+        <p style={{ fontFamily: "Arial, sans-serif", fontSize: 15, color: "#666", lineHeight: 1.9 }}>Disfruteu en parella d'una experiència inoblidable. El Pack Romàntic inclou:</p>
+        <div style={{ marginBottom: 32 }}>
+          {["Obsequi ampolla de vi negre DOQ Priorat.", "Espelmes a la taula especial de sopar."].map(item => (
+            <div key={item} style={{ display: "flex", gap: 10, marginBottom: 8, alignItems: "flex-start" }}>
+              <span style={{ color: "#5a3e28" }}>✓</span>
+              <span style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666", lineHeight: 1.6 }}>{item}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
+          <div style={{ background: "#fff", border: "0.5px solid #e0dbd0", borderRadius: 12, padding: "1.5rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <button onClick={() => { if (mes === 0) { setMes(11); setAny(y => y - 1); } else setMes(m => m - 1); setDataInici(null); setDataFi(null); setAvis(""); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "#5a3e28" }}>‹</button>
+              <span style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 500 }}>{mesos[mes]} {any}</span>
+              <button onClick={() => { if (mes === 11) { setMes(0); setAny(y => y + 1); } else setMes(m => m + 1); setDataInici(null); setDataFi(null); setAvis(""); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "#5a3e28" }}>›</button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3 }}>
+              {["Dl", "Dt", "Dc", "Dj", "Dv", "Ds", "Dg"].map(d => <div key={d} style={{ textAlign: "center", fontSize: 11, color: "#999", padding: "4px 0", fontFamily: "Arial, sans-serif" }}>{d}</div>)}
+              {Array(primer).fill(null).map((_, i) => <div key={"e" + i} />)}
+              {Array(dies).fill(null).map((_, i) => {
+                const k = toKey(i + 1);
+                const blocked = BLOCKED.includes(k);
+                const isInici = k === dataInici;
+                const isFi = k === dataFi;
+                return (
+                  <div key={i} onClick={() => toggleDia(i + 1)} style={{ aspectRatio: "1", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6, fontSize: 13, cursor: blocked ? "not-allowed" : "pointer", background: blocked ? "#f0ece6" : (isInici || isFi) ? "#5a3e28" : "transparent", color: blocked ? "#ccc" : (isInici || isFi) ? "#fff" : "#2c2a25", fontWeight: (isInici || isFi) ? 600 : 400, fontFamily: "Arial, sans-serif" }}>
+                    {i + 1}
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ marginTop: 12, fontSize: 12, color: "#aaa", fontFamily: "Arial, sans-serif", display: "flex", gap: 16, flexWrap: "wrap" }}>
+              <span>■ <span style={{ color: "#ccc" }}>No disponible</span></span>
+              <span style={{ color: "#5a3e28" }}>■ Entrada / Sortida</span>
+            </div>
+            {avis && (
+              <div style={{ marginTop: 10, padding: "8px 12px", background: "#fdeceb", border: "0.5px solid #e8b0aa", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 12, color: "#a03028" }}>
+                {avis}
+              </div>
+            )}
+            <div style={{ marginTop: 10, fontFamily: "Arial, sans-serif", fontSize: 12, color: "#9a8060" }}>
+              {!dataInici && "Selecciona el dia d'entrada (1 nit)."}
+              {dataInici && dataFi && `Entrada: ${formatData(dataInici)} · Sortida: ${formatData(dataFi)}`}
+            </div>
+          </div>
+          <div>
+            <div style={{ background: "#f0ebe2", borderRadius: 12, padding: "1.5rem", marginBottom: 16 }}>
+              <h3 style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 500, color: "#3a2a18", marginTop: 0 }}>Una nit Pack Romàntic</h3>
+              {SUITES.map(su => (
+                <div key={su.id} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "0.5px solid #e0dbd0", fontFamily: "Arial, sans-serif", fontSize: 13 }}>
+                  <span style={{ color: "#666" }}>{su.id}</span>
+                  <span style={{ fontWeight: 600, color: "#5a3e28" }}>{TARIFES[su.id].preu + PACK_ROMANTIC_PREU}€<span style={{ fontWeight: 400, color: "#999" }}> una nit</span></span>
+                </div>
+              ))}
+            </div>
+            {dataInici && dataFi ? (
+              <button onClick={continuar} style={{ background: "#5a3e28", color: "#fff", border: "none", width: "100%", padding: "12px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 15, cursor: "pointer", fontWeight: 600 }}>Continuar amb aquesta data →</button>
+            ) : (
+              <div style={{ background: "#fdf8f0", border: "0.5px solid #e0dbd0", borderRadius: 12, padding: "1.5rem", textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 14, color: "#aaa" }}>Selecciona un dia d'entrada al calendari</div>
+            )}
+          </div>
+        </div>
       </div>
       <Footer />
     </div>
@@ -723,6 +842,7 @@ const mobileCSS = `
 function AppInner() {
   const [page, setPage] = useState("Inici");
   const [menuObert, setMenuObert] = useState(false);
+  const [packSeed, setPackSeed] = useState(null);
   if (typeof document !== "undefined") {
     let styleEl = document.getElementById("responsive-css");
     if (!styleEl) {
@@ -885,11 +1005,6 @@ function AppInner() {
             </div>
             <button onClick={() => go("Reserves")} style={{ background: "#5a3e28", color: "#fff", border: "none", padding: "12px 32px", borderRadius: 8, fontSize: 15, cursor: "pointer", fontFamily: "Arial, sans-serif", fontWeight: 600 }}>Reservar</button>
           </div>
-          {suiteActual.id === "Suite 3" && (
-            <div style={{ marginTop: 16, background: "#fdf8f0", border: "0.5px solid #e8e0d0", borderRadius: 12, padding: "1rem 1.5rem", fontFamily: "Arial, sans-serif", fontSize: 13, color: "#7a5a3a", lineHeight: 1.7 }}>
-              💐 <strong>Pack Romàntic disponible amb aquesta suite</strong> — {PACK_ROMANTIC_DESC} +{PACK_ROMANTIC_PREU}€ (1 nit). Es tria a l'últim pas de la reserva.
-            </div>
-          )}
         </div>
         <Footer />
       </div>
@@ -1070,9 +1185,13 @@ function AppInner() {
       </div>
     );
   }
+  // PÀGINA PACK ROMÀNTIC
+  if (page === "Pack Romàntic") {
+    return <PackRomanticPage go={go} s={s} NavBar={NavBar} Footer={Footer} BackBtn={BackBtn} onIniciarReserva={(seed) => setPackSeed(seed)} />;
+  }
   // PÀGINA RESERVES
   if (page === "Reserves") {
-    return <ReservesPage go={go} s={s} NavBar={NavBar} Footer={Footer} />;
+    return <ReservesPage go={go} s={s} NavBar={NavBar} Footer={Footer} packSeed={packSeed} onConsumSeed={() => setPackSeed(null)} />;
   }
   // HOME
   return (
