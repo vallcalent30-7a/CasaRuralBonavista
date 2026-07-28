@@ -1,4 +1,35 @@
 // Casa Rural Bonavista — App.jsx
+// Versió: v2.2 — 21 juliol 2026
+// - Backend real per a Reserves: el formulari ja no es limita a canviar
+//   d'estat local — ara fa POST a /api/reserva (nova funció serverless de
+//   Vercel, fitxer api/reserva.js, entregat com a fitxer separat en
+//   aquesta sessió) que envia un email a contacta@casaruralbonavista.cat
+//   via Resend amb totes les dades de la sol·licitud (suite, dates, preu,
+//   pack romàntic, dades de contacte). Nou estat "Enviant..." al botó i
+//   missatge d'error si el backend no respon correctament.
+// CAL (configuració manual, fora del codi, un sol cop): 1) Crear compte
+// gratuït a resend.com. 2) Afegir-hi el domini casaruralbonavista.cat i
+// configurar a IONOS els registres DNS que Resend indiqui, per verificar
+// el domini. 3) Crear una API key a Resend. 4) Afegir-la com a variable
+// d'entorn RESEND_API_KEY al projecte de Vercel (Settings → Environment
+// Variables) i tornar a desplegar. 5) Pujar api/reserva.js a l'arrel del
+// projecte, mateix nivell que src/ i public/.
+// Versió: v2.1 — 21 juliol 2026
+// - Eliminat el text "Màx. 8 persones" a la pàgina Habitacions i a la
+//   secció d'Habitacions de la home (quedava desactualitzat).
+// - Preus de les suites canviats a preu fix tot l'any (sense distinció de
+//   temporada alta/baixa): Suite 1 127€/nit, Suite 2 127€/nit, Suite 3
+//   182€/nit. TARIFES simplificat a { preu, extra } per suite. Eliminada
+//   la funció temporada() i totes les referències a temp/baixa/alta a
+//   Habitacions i Reserves (targetes de suite, resum de pas 2, capçalera
+//   de tarifes a Reserves).
+// - Logo de la barra de navegació i del peu de pàgina doblats de mida
+//   (barra: 34px → 68px d'alçada d'imatge, alçada de la barra 56px →
+//   100px, posició del menú mòbil desplegable ajustada a la nova alçada;
+//   peu de pàgina: 44px → 88px).
+// PENDENT: backend de Reserves (el formulari encara no envia enlloc la
+// sol·licitud) — a l'espera de decidir l'enfocament (formulari extern
+// sense codi vs. funció serverless pròpia a Vercel + servei d'email).
 // Versió: v2.0 — 20 juliol 2026
 // Afegit el logo real (imatge) a la barra de navegació i al peu de pàgina,
 // referenciat com a /logo.png. CAL pujar el fitxer logo.png a la carpeta
@@ -38,9 +69,7 @@
 // plural "persona/persones". v1.1 va introduir la selecció de dates per
 // rang a Reserves. v1.0 va corregir el formulari de Contacte (enviament
 // mailto, honeypot, validació d'email).
-
 import { useState, Component } from "react";
-
 // Xarxa de seguretat: si qualsevol pàgina llança un error durant el render,
 // React buida tot #root per defecte (sense menú ni contingut — pantalla en blanc).
 // Aquest ErrorBoundary intercepta l'error i el mostra en pantalla, per poder
@@ -71,9 +100,7 @@ class ErrorBoundary extends Component {
     return this.props.children;
   }
 }
-
 const NAV = ["Inici", "Habitacions", "La Casa", "L'Entorn", "Reserves", "Contacte"];
-
 const SERVICES = [
   { icon: "❄️", label: "Aire condicionat" },
   { icon: "🔥", label: "Calefacció" },
@@ -87,7 +114,6 @@ const SERVICES = [
   { icon: "📚", label: "Biblioteca" },
   { icon: "🍸", label: "Gin & Tonic" },
 ];
-
 // Numeració de suites (fixada): Suite 1 = petita, Suite 2 = mitjana,
 // Suite 3 = quàdruple amb balcó privatiu (la "més especial").
 const SUITES = [
@@ -129,14 +155,12 @@ const SUITES = [
     ]
   }
 ];
-
 const SUITE_AMENITIES = [
   { icon: "🛏️", label: "Llit doble" }, { icon: "🚿", label: "Bany privat equipat" },
   { icon: "🧊", label: "Nevera" }, { icon: "📺", label: "Smart TV" },
   { icon: "❄️", label: "Aire condicionat" }, { icon: "🔥", label: "Calefacció" },
   { icon: "💻", label: "Escriptori" }, { icon: "📶", label: "Fibra i WiFi" },
 ];
-
 const ROOM_IMGS = [
   { label: "Suite 1", color: "#9a8a72" },
   { label: "Suite 2", color: "#c4b09a" },
@@ -144,7 +168,6 @@ const ROOM_IMGS = [
 ];
 const HOUSE_IMGS = [{ color: "#c8b89a" }, { color: "#baa88a" }, { color: "#d4c4a8" }];
 const ENTORN_IMGS = [{ color: "#7a9a68" }, { color: "#8aaa78" }, { color: "#6a8a58" }];
-
 const FOTOS_CASA = [
   { color: "#c8b89a", alt: "Vestíbul d'accés" },
   { color: "#b8a88a", alt: "Sala d'estar amb xemeneia" },
@@ -154,14 +177,11 @@ const FOTOS_CASA = [
   { color: "#b0a080", alt: "Vistes a la Vall de Gratallops" },
   { color: "#c8b8a0", alt: "Detalls de pedra i fusta" },
 ];
-
 // ─── MÒDUL: CONTACTE ────────────────────────────────────────────────────
 // Component independent (no viu dins del render d'App) per evitar que es
 // torni a crear i perdi l'estat del formulari en cada render del pare.
 // Depèn únicament de props: go, s, NavBar, Footer, BackBtn.
-
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 // Component independent (no viu dins del render d'App) per evitar que es
 // torni a crear i perdi l'estat del formulari en cada render del pare.
 // Depèn únicament de props: go, s, NavBar, Footer, BackBtn.
@@ -170,10 +190,8 @@ function ContactePage({ go, s, NavBar, Footer, BackBtn }) {
   const [cEnviat, setCEnviat] = useState(false);
   const [intentValidar, setIntentValidar] = useState(false);
   const [errorEnviament, setErrorEnviament] = useState("");
-
   const emailValid = EMAIL_RE.test(cForm.email.trim());
   const cValid = Boolean(cForm.nom.trim() && emailValid && cForm.msg.trim() && cForm.consent);
-
   const errors = [];
   if (intentValidar && !cEnviat) {
     if (!cForm.nom.trim()) errors.push("Falta el nom.");
@@ -182,17 +200,14 @@ function ContactePage({ go, s, NavBar, Footer, BackBtn }) {
     if (!cForm.msg.trim()) errors.push("Falta el missatge.");
     if (!cForm.consent) errors.push("Cal acceptar la Política de Privacitat per continuar.");
   }
-
   const enviar = () => {
     setIntentValidar(true);
     setErrorEnviament("");
     if (!cValid) return;
-
     if (cForm.website.trim() !== "") {
       setCEnviat(true);
       return;
     }
-
     try {
       const cos = `Nom: ${cForm.nom}\nEmail: ${cForm.email}\n\n${cForm.msg}`;
       const mailtoUrl = `mailto:contacta@casaruralbonavista.cat?subject=${encodeURIComponent("Missatge de contacte - web Casa Rural Bonavista")}&body=${encodeURIComponent(cos)}`;
@@ -202,7 +217,6 @@ function ContactePage({ go, s, NavBar, Footer, BackBtn }) {
       setErrorEnviament("No s'ha pogut obrir el client de correu. Escriu-nos directament a contacta@casaruralbonavista.cat.");
     }
   };
-
   return (
     <div style={s.wrap}>
       <NavBar />
@@ -218,10 +232,8 @@ function ContactePage({ go, s, NavBar, Footer, BackBtn }) {
           </svg>
         </div>
       </div>
-
       <div style={{ maxWidth: 820, margin: "0 auto", padding: "2rem 2rem 3rem" }}>
         <BackBtn to="Inici" label="Tornar a l'inici" />
-
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 32, marginBottom: 48 }}>
           <div>
             <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 500, color: "#3a2a18", marginTop: 0 }}>Envia'ns un missatge</h2>
@@ -271,7 +283,6 @@ function ContactePage({ go, s, NavBar, Footer, BackBtn }) {
               </div>
             )}
           </div>
-
           <div>
             <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 500, color: "#3a2a18", marginTop: 0 }}>Informació</h2>
             {[
@@ -295,7 +306,6 @@ function ContactePage({ go, s, NavBar, Footer, BackBtn }) {
             </div>
           </div>
         </div>
-
         <div>
           <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 500, color: "#3a2a18", marginBottom: 20 }}>Com arribar</h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, marginBottom: 24 }}>
@@ -336,30 +346,26 @@ function ContactePage({ go, s, NavBar, Footer, BackBtn }) {
     </div>
   );
 }
-
 // ─── MÒDUL: RESERVES ────────────────────────────────────────────────────
 // Component independent (no viu dins del render d'App), pel mateix motiu
 // que ContactePage. Depèn únicament de props: go, s, NavBar, Footer.
 // NOTA: aquest mòdul encara NO envia realment la sol·licitud enlloc
-// (mateix problema detectat a Contacte) — pendent de correcció en una
-// altra sessió, fora de l'abast acordat per aquest canvi.
-
+// (mateix problema detectat a Contacte) — pendent de decidir l'enfocament
+// del backend (formulari extern vs. funció serverless pròpia).
 // Font única de veritat per als preus — Habitacions i Reserves llegeixen
 // sempre d'aquí, mai un número fix escrit a mà, per evitar descoordinacions.
+// Preu fix tot l'any (sense distinció de temporada alta/baixa).
 const TARIFES = {
-  "Suite 1": { baixa: 120, alta: 144, extra: 0 },
-  "Suite 2": { baixa: 120, alta: 144, extra: 0 },
-  "Suite 3": { baixa: 160, alta: 192, extra: 40 },
+  "Suite 1": { preu: 127, extra: 0 },
+  "Suite 2": { preu: 127, extra: 0 },
+  "Suite 3": { preu: 182, extra: 40 },
 };
-const temporada = (mes) => (mes >= 6 && mes <= 7) ? "alta" : "baixa";
 const BLOCKED = ["2026-04-10", "2026-04-11", "2026-04-12", "2026-04-13", "2026-04-14", "2026-04-18", "2026-04-19", "2026-05-01", "2026-05-02", "2026-05-03"];
-
 // Pack Romàntic: experiència d'1 nit, exclusiva de la Suite 3. Preu fix,
 // tot inclòs (detall de benvinguda, sopar amb espelmes i vi DOQ Priorat).
 // Mai se sopa al balcó.
 const PACK_ROMANTIC_PREU = 180;
 const PACK_ROMANTIC_DESC = "Detall de benvinguda a l'habitació, sopar amb espelmes i una ampolla de vi DOQ Priorat.";
-
 function ReservesPage({ go, s, NavBar, Footer }) {
   const [any, setAny] = useState(2026);
   const [mes, setMes] = useState(3);
@@ -371,10 +377,11 @@ function ReservesPage({ go, s, NavBar, Footer }) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ nom: "", email: "", tel: "", notes: "", consent: false });
   const [enviat, setEnviat] = useState(false);
+  const [enviantReserva, setEnviantReserva] = useState(false);
+  const [errorEnviamentReserva, setErrorEnviamentReserva] = useState("");
   const [intentValidarReserva, setIntentValidarReserva] = useState(false);
   const [packRomantic, setPackRomantic] = useState(false);
   const [nitPack, setNitPack] = useState(null);
-
   const rEmailValid = EMAIL_RE.test(form.email.trim());
   const rValid = Boolean(form.nom.trim() && rEmailValid && form.consent && (!packRomantic || nitPack));
   const rErrors = [];
@@ -385,16 +392,42 @@ function ReservesPage({ go, s, NavBar, Footer }) {
     if (!form.consent) rErrors.push("Cal acceptar la Política de Privacitat per continuar.");
     if (packRomantic && !nitPack) rErrors.push("Selecciona a quina nit vols el Pack Romàntic.");
   }
-  const enviarReserva = () => {
+  const enviarReserva = async () => {
     setIntentValidarReserva(true);
-    if (rValid) setEnviat(true);
+    setErrorEnviamentReserva("");
+    if (!rValid) return;
+    setEnviantReserva(true);
+    try {
+      const resp = await fetch("/api/reserva", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          suite: suiteEsc,
+          nits,
+          dataInici,
+          dataFi,
+          pax,
+          preuTotal,
+          packRomantic,
+          nitPack,
+          nom: form.nom,
+          email: form.email,
+          tel: form.tel,
+          notes: form.notes,
+        }),
+      });
+      if (!resp.ok) throw new Error("send-failed");
+      setEnviat(true);
+    } catch (err) {
+      setErrorEnviamentReserva("No s'ha pogut enviar la sol·licitud. Torna-ho a provar en uns segons o escriu-nos directament a contacta@casaruralbonavista.cat.");
+    } finally {
+      setEnviantReserva(false);
+    }
   };
-
   const mesos = ["Gener", "Febrer", "Març", "Abril", "Maig", "Juny", "Juliol", "Agost", "Setembre", "Octubre", "Novembre", "Desembre"];
   const dies = new Date(any, mes + 1, 0).getDate();
   const primer = (new Date(any, mes, 1).getDay() + 6) % 7;
   const toKey = (d) => `${any}-${String(mes + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-
   // Comprova si hi ha algun dia bloquejat estrictament entre dues dates del mateix mes.
   const rangConteBloquejats = (keyA, keyB) => {
     const diaA = Number(keyA.slice(-2));
@@ -405,21 +438,18 @@ function ReservesPage({ go, s, NavBar, Footer }) {
     }
     return false;
   };
-
   // Selecció per rang: 1r clic = data d'entrada, 2n clic = data de sortida.
   // Un 3r clic (quan ja hi ha un rang complet) comença una nova selecció.
   const toggleDia = (d) => {
     const k = toKey(d);
     if (BLOCKED.includes(k)) return;
     setAvisRang("");
-
     if (!dataInici) {
       setDataInici(k);
       setDataFi(null);
       setSuiteEsc(null);
       return;
     }
-
     if (!dataFi) {
       if (k === dataInici) {
         setDataInici(null);
@@ -436,22 +466,17 @@ function ReservesPage({ go, s, NavBar, Footer }) {
       setSuiteEsc(null);
       return;
     }
-
     setDataInici(k);
     setDataFi(null);
     setSuiteEsc(null);
   };
-
   const nits = (dataInici && dataFi) ? Math.round((new Date(dataFi) - new Date(dataInici)) / 86400000) : 0;
-  const temp = temporada(mes);
-
   const calcPreu = (suite) => {
     const t = TARIFES[suite];
-    const base = t[temp] * nits;
+    const base = t.preu * nits;
     const extra = (suite === "Suite 3" && pax > 2) ? t.extra * (pax - 2) * nits : 0;
     return base + extra;
   };
-
   // Llista de nits concretes reservades (des de dataInici fins al dia abans de dataFi),
   // per poder triar a quina nit s'aplica el Pack Romàntic.
   const nitsReservades = () => {
@@ -469,11 +494,8 @@ function ReservesPage({ go, s, NavBar, Footer }) {
     const [, m, d] = key.split("-");
     return `${d} ${mesos[Number(m) - 1]}`;
   };
-
   const preuTotal = suiteEsc ? calcPreu(suiteEsc) + (packRomantic ? PACK_ROMANTIC_PREU : 0) : 0;
-
   const suitesDisp = ["Suite 1", "Suite 2", "Suite 3"];
-
   return (
     <div style={s.wrap}>
       <NavBar />
@@ -489,7 +511,6 @@ function ReservesPage({ go, s, NavBar, Footer }) {
           </svg>
         </div>
       </div>
-
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "2rem" }}>
         <div style={{ display: "flex", gap: 0, marginBottom: 32 }}>
           {["Dates", "Suite", "Sol·licitud"].map((st, i) => (
@@ -498,7 +519,6 @@ function ReservesPage({ go, s, NavBar, Footer }) {
             </div>
           ))}
         </div>
-
         {step === 1 && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
             <div style={{ background: "#fff", border: "0.5px solid #e0dbd0", borderRadius: 12, padding: "1.5rem" }}>
@@ -539,19 +559,16 @@ function ReservesPage({ go, s, NavBar, Footer }) {
                 {dataInici && dataFi && `Entrada: ${dataInici} · Sortida: ${dataFi}`}
               </div>
             </div>
-
             <div>
               <div style={{ background: "#f0ebe2", borderRadius: 12, padding: "1.5rem", marginBottom: 16 }}>
-                <h3 style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 500, color: "#3a2a18", marginTop: 0 }}>Tarifes {temp === "alta" ? "temporada alta" : "temporada baixa"}</h3>
+                <h3 style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 500, color: "#3a2a18", marginTop: 0 }}>Tarifes</h3>
                 {Object.entries(TARIFES).map(([suite, t]) => (
                   <div key={suite} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "0.5px solid #e0dbd0", fontFamily: "Arial, sans-serif", fontSize: 13 }}>
                     <span style={{ color: "#666" }}>{suite}</span>
-                    <span style={{ fontWeight: 600, color: "#5a3e28" }}>{t[temp]}€<span style={{ fontWeight: 400, color: "#999" }}>/nit</span>{suite === "Suite 3" ? <span style={{ color: "#aaa", fontSize: 11 }}> +{t.extra}€/pax extra</span> : ""}</span>
+                    <span style={{ fontWeight: 600, color: "#5a3e28" }}>{t.preu}€<span style={{ fontWeight: 400, color: "#999" }}>/nit</span>{suite === "Suite 3" ? <span style={{ color: "#aaa", fontSize: 11 }}> +{t.extra}€/pax extra</span> : ""}</span>
                   </div>
                 ))}
-                <p style={{ fontSize: 12, color: "#aaa", margin: "8px 0 0", fontFamily: "Arial, sans-serif" }}>Temporada alta: Juliol–Agost (x1.2)</p>
               </div>
-
               {nits > 0 && (
                 <div style={{ background: "#fff", border: "0.5px solid #e0dbd0", borderRadius: 12, padding: "1.5rem" }}>
                   <div style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666", marginBottom: 12 }}>
@@ -570,12 +587,11 @@ function ReservesPage({ go, s, NavBar, Footer }) {
             </div>
           </div>
         )}
-
         {step === 2 && (
           <div>
             <button onClick={() => setStep(1)} style={{ background: "none", border: "none", color: "#5a3e28", cursor: "pointer", fontFamily: "Arial, sans-serif", fontSize: 14, marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}>← Canviar dates</button>
             <div style={{ background: "#f0ebe2", borderRadius: 12, padding: "1rem 1.5rem", marginBottom: 24, fontFamily: "Arial, sans-serif", fontSize: 14, color: "#5a3e28" }}>
-              📅 {nits} nit{nits > 1 ? "s" : ""} · {pax} {pax > 1 ? "persones" : "persona"} · Temporada {temp}
+              📅 {nits} nit{nits > 1 ? "s" : ""} · {pax} {pax > 1 ? "persones" : "persona"}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 20 }}>
               {suitesDisp.map(suite => {
@@ -598,7 +614,6 @@ function ReservesPage({ go, s, NavBar, Footer }) {
             )}
           </div>
         )}
-
         {step === 3 && !enviat && (
           <div style={{ maxWidth: 560, margin: "0 auto" }}>
             <button onClick={() => setStep(2)} style={{ background: "none", border: "none", color: "#5a3e28", cursor: "pointer", fontFamily: "Arial, sans-serif", fontSize: 14, marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}>← Canviar suite</button>
@@ -606,7 +621,6 @@ function ReservesPage({ go, s, NavBar, Footer }) {
               <span style={{ color: "#5a3e28", fontWeight: 600 }}>{suiteEsc}{packRomantic ? " + Pack Romàntic" : ""}</span>
               <span style={{ color: "#5a3e28", fontWeight: 600 }}>{preuTotal}€</span>
             </div>
-
             {suiteEsc === "Suite 3" && (
               <div style={{ marginBottom: 20, padding: "12px", background: "#fdf8f0", borderRadius: 8, border: "0.5px solid #e8e0d0" }}>
                 <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
@@ -634,7 +648,6 @@ function ReservesPage({ go, s, NavBar, Footer }) {
                 )}
               </div>
             )}
-
             {[["Nom complet", "nom", "text"], ["Email", "email", "email"], ["Telèfon", "tel", "tel"]].map(([lbl, field, type]) => (
               <div key={field} style={{ marginBottom: 12 }}>
                 <label style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#666", display: "block", marginBottom: 4 }}>{lbl}</label>
@@ -662,10 +675,14 @@ function ReservesPage({ go, s, NavBar, Footer }) {
                 ))}
               </div>
             )}
-            <button onClick={enviarReserva} aria-disabled={!rValid} style={{ background: rValid ? "#5a3e28" : "#ccc", color: "#fff", border: "none", width: "100%", padding: "14px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 15, cursor: "pointer", fontWeight: 600 }}>Enviar sol·licitud de reserva</button>
+            {errorEnviamentReserva && (
+              <div style={{ marginBottom: 16, padding: "10px 14px", background: "#fdeceb", border: "0.5px solid #e8b0aa", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 12, color: "#a03028" }}>
+                {errorEnviamentReserva}
+              </div>
+            )}
+            <button onClick={enviarReserva} disabled={enviantReserva} aria-disabled={!rValid || enviantReserva} style={{ background: (rValid && !enviantReserva) ? "#5a3e28" : "#ccc", color: "#fff", border: "none", width: "100%", padding: "14px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 15, cursor: enviantReserva ? "default" : "pointer", fontWeight: 600 }}>{enviantReserva ? "Enviant..." : "Enviar sol·licitud de reserva"}</button>
           </div>
         )}
-
         {enviat && (
           <div style={{ textAlign: "center", padding: "3rem 2rem" }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
@@ -674,7 +691,7 @@ function ReservesPage({ go, s, NavBar, Footer }) {
               Hem rebut la teva sol·licitud per <strong>{suiteEsc}</strong>{packRomantic ? <> amb <strong>Pack Romàntic</strong> per la nit del <strong>{nitPack ? formatData(nitPack) : ""}</strong></> : ""}.<br />
               Et contactarem en menys de 24 hores a <strong>{form.email}</strong> per confirmar la reserva i les instruccions de pagament.
             </p>
-            <button onClick={() => { setStep(1); setDataInici(null); setDataFi(null); setSuiteEsc(null); setEnviat(false); setIntentValidarReserva(false); setForm({ nom: "", email: "", tel: "", notes: "", consent: false }); setPackRomantic(false); setNitPack(null); go("Inici"); }} style={{ background: "#5a3e28", color: "#fff", border: "none", padding: "12px 32px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 14, cursor: "pointer", marginTop: 16 }}>Tornar a l'inici</button>
+            <button onClick={() => { setStep(1); setDataInici(null); setDataFi(null); setSuiteEsc(null); setEnviat(false); setIntentValidarReserva(false); setErrorEnviamentReserva(""); setForm({ nom: "", email: "", tel: "", notes: "", consent: false }); setPackRomantic(false); setNitPack(null); go("Inici"); }} style={{ background: "#5a3e28", color: "#fff", border: "none", padding: "12px 32px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 14, cursor: "pointer", marginTop: 16 }}>Tornar a l'inici</button>
           </div>
         )}
       </div>
@@ -682,7 +699,6 @@ function ReservesPage({ go, s, NavBar, Footer }) {
     </div>
   );
 }
-
 const mobileCSS = `
   @media (max-width: 768px) {
     .nav-desktop { display: none !important; }
@@ -693,11 +709,9 @@ const mobileCSS = `
     .nav-hamburger { display: none !important; }
   }
 `;
-
 function AppInner() {
   const [page, setPage] = useState("Inici");
   const [menuObert, setMenuObert] = useState(false);
-
   if (typeof document !== "undefined") {
     let styleEl = document.getElementById("responsive-css");
     if (!styleEl) {
@@ -707,19 +721,16 @@ function AppInner() {
     }
     styleEl.textContent = mobileCSS;
   }
-
   const go = (p) => setPage(p);
-
   const s = {
     wrap: { fontFamily: "'Georgia', serif", color: "#2c2a25", background: "#faf8f4" },
-    nav: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 2rem", height: 56, background: "#fff", borderBottom: "0.5px solid #e0dbd0", position: "sticky", top: 0, zIndex: 100 },
+    nav: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 2rem", height: 100, background: "#fff", borderBottom: "0.5px solid #e0dbd0", position: "sticky", top: 0, zIndex: 100 },
     logo: { fontWeight: 600, fontSize: 17, letterSpacing: "0.03em", color: "#5a3e28", fontFamily: "Georgia, serif", cursor: "pointer" },
     navBtn: (active) => ({ background: active ? "#f0ebe2" : "transparent", border: "none", padding: "6px 13px", borderRadius: 20, cursor: "pointer", fontSize: 13, color: active ? "#5a3e28" : "#777", fontWeight: active ? 600 : 400, fontFamily: "Arial, sans-serif" }),
   };
-
   const NavBar = () => (
     <nav style={s.nav}>
-      <img src="/logo.png" alt="Casa Rural Bonavista" onClick={() => { go("Inici"); setMenuObert(false); }} style={{ height: 34, cursor: "pointer", display: "block" }} />
+      <img src="/logo.png" alt="Casa Rural Bonavista" onClick={() => { go("Inici"); setMenuObert(false); }} style={{ height: 68, cursor: "pointer", display: "block" }} />
       <div style={{ display: "flex", gap: 2 }} className="nav-desktop">
         {NAV.map(n => <button key={n} style={s.navBtn(page === n)} onClick={() => go(n)}>{n}</button>)}
       </div>
@@ -727,7 +738,7 @@ function AppInner() {
         {menuObert ? "✕" : "☰"}
       </button>
       {menuObert && (
-        <div style={{ position: "absolute", top: 56, left: 0, right: 0, background: "#fff", borderBottom: "0.5px solid #e0dbd0", zIndex: 200, padding: "0.5rem 0" }}>
+        <div style={{ position: "absolute", top: 100, left: 0, right: 0, background: "#fff", borderBottom: "0.5px solid #e0dbd0", zIndex: 200, padding: "0.5rem 0" }}>
           {NAV.map(n => (
             <button key={n} onClick={() => { go(n); setMenuObert(false); }} style={{ display: "block", width: "100%", textAlign: "left", background: page === n ? "#f0ebe2" : "transparent", border: "none", padding: "12px 2rem", cursor: "pointer", fontSize: 15, color: page === n ? "#5a3e28" : "#555", fontWeight: page === n ? 600 : 400, fontFamily: "Arial, sans-serif" }}>
               {n}
@@ -737,10 +748,9 @@ function AppInner() {
       )}
     </nav>
   );
-
   const Footer = () => (
     <div style={{ background: "#3a2a18", color: "#c8b89a", textAlign: "center", padding: "2rem", fontFamily: "Arial, sans-serif", marginTop: "3rem" }}>
-      <img src="/logo.png" alt="Casa Rural Bonavista" style={{ height: 44, margin: "0 0 12px", borderRadius: 6 }} />
+      <img src="/logo.png" alt="Casa Rural Bonavista" style={{ height: 88, margin: "0 0 12px", borderRadius: 6 }} />
       <p style={{ margin: "0 0 4px", fontWeight: 600, fontSize: 15, letterSpacing: "0.05em" }}>CASA RURAL BONAVISTA</p>
       <p style={{ margin: "0 0 8px", opacity: 0.6, fontSize: 13 }}>El Lloar · Priorat · casaruralbonavista.cat</p>
       <div style={{ display: "flex", justifyContent: "center", gap: 16, fontSize: 12, opacity: 0.7 }}>
@@ -749,13 +759,11 @@ function AppInner() {
       </div>
     </div>
   );
-
   const BackBtn = ({ to, label }) => (
     <button onClick={() => go(to)} style={{ background: "none", border: "none", color: "#5a3e28", cursor: "pointer", fontFamily: "Arial, sans-serif", fontSize: 14, padding: "0 0 2rem", display: "flex", alignItems: "center", gap: 6 }}>
       ← {label}
     </button>
   );
-
   const Galeria = ({ fotos }) => {
     const [idx, setIdx] = useState(0);
     const prev = () => setIdx(i => (i === 0 ? fotos.length - 1 : i - 1));
@@ -780,7 +788,6 @@ function AppInner() {
       </div>
     );
   };
-
   // PÀGINA HABITACIONS
   if (page === "Habitacions") {
     return (
@@ -789,7 +796,7 @@ function AppInner() {
         <div style={{ background: "#f0ebe2", padding: "3rem 2rem" }}>
           <div style={{ maxWidth: 900, margin: "0 auto" }}>
             <h2 style={{ fontFamily: "Georgia, serif", fontSize: 32, fontWeight: 500, color: "#3a2a18", margin: "0 0 0.4rem" }}>Habitacions</h2>
-            <p style={{ fontFamily: "Arial, sans-serif", fontSize: 15, color: "#9a8060", margin: "0 0 2.5rem" }}>2 suites dobles · 1 suite quàdruple · Màx. 8 persones · Only Adults</p>
+            <p style={{ fontFamily: "Arial, sans-serif", fontSize: 15, color: "#9a8060", margin: "0 0 2.5rem" }}>2 suites dobles · 1 suite quàdruple · Only Adults</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 24 }}>
               {SUITES.map(suite => (
                 <div key={suite.id} onClick={() => go(suite.id)} style={{ cursor: "pointer", background: "#fff", border: "0.5px solid #e0dbd0", borderRadius: 12, overflow: "hidden" }}>
@@ -800,7 +807,7 @@ function AppInner() {
                   <div style={{ padding: "1.25rem" }}>
                     <div style={{ fontFamily: "Georgia, serif", fontSize: 20, fontWeight: 600, color: "#3a2a18", marginBottom: 4 }}>{suite.id}</div>
                     <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#9a8060", marginBottom: 4 }}>{suite.tipus} · {suite.capacitat} persones</div>
-                    <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#5a3e28", fontWeight: 600, marginBottom: 12 }}>Des de {TARIFES[suite.id].baixa}€ <span style={{ color: "#9a8060", fontWeight: 400 }}>/nit</span></div>
+                    <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#5a3e28", fontWeight: 600, marginBottom: 12 }}>{TARIFES[suite.id].preu}€ <span style={{ color: "#9a8060", fontWeight: 400 }}>/nit</span></div>
                     <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#5a3e28", fontWeight: 600 }}>Veure detalls →</div>
                   </div>
                 </div>
@@ -812,7 +819,6 @@ function AppInner() {
       </div>
     );
   }
-
   // PÀGINES INDIVIDUALS DE CADA SUITE
   const suiteActual = SUITES.find(su => su.id === page);
   if (suiteActual) {
@@ -863,7 +869,7 @@ function AppInner() {
           </div>
           <div style={{ marginTop: 32, background: "#f0ebe2", borderRadius: 12, padding: "1.5rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
             <div>
-              <div style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 600, color: "#3a2a18" }}>Des de {TARIFES[suiteActual.id].baixa}€ <span style={{ fontSize: 14, fontWeight: 400, color: "#999", fontFamily: "Arial, sans-serif" }}>/nit</span></div>
+              <div style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 600, color: "#3a2a18" }}>{TARIFES[suiteActual.id].preu}€ <span style={{ fontSize: 14, fontWeight: 400, color: "#999", fontFamily: "Arial, sans-serif" }}>/nit</span></div>
               <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#9a8060" }}>Esmorzar inclòs · Estada mínima 2 nits</div>
             </div>
             <button onClick={() => go("Reserves")} style={{ background: "#5a3e28", color: "#fff", border: "none", padding: "12px 32px", borderRadius: 8, fontSize: 15, cursor: "pointer", fontFamily: "Arial, sans-serif", fontWeight: 600 }}>Reservar</button>
@@ -878,7 +884,6 @@ function AppInner() {
       </div>
     );
   }
-
   // PÀGINA LA CASA
   if (page === "La Casa") {
     return (
@@ -925,7 +930,6 @@ function AppInner() {
               ))}
             </div>
           </div>
-
           <div style={{ background: "#f0ebe2", borderRadius: 16, padding: "2rem", marginBottom: 40 }}>
             <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
               <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#5a3e28", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -938,7 +942,6 @@ function AppInner() {
               </div>
             </div>
           </div>
-
           <div style={{ background: "#e8f0e0", borderRadius: 16, padding: "1.5rem 2rem", marginBottom: 40, display: "flex", gap: 16, alignItems: "center" }}>
             <span style={{ fontSize: 32 }}>🥾</span>
             <div>
@@ -951,12 +954,10 @@ function AppInner() {
       </div>
     );
   }
-
   // PÀGINA CONTACTE
   if (page === "Contacte") {
     return <ContactePage go={go} s={s} NavBar={NavBar} Footer={Footer} BackBtn={BackBtn} />;
   }
-
   // PÀGINA L'ENTORN
   if (page === "L'Entorn") {
     const seccions = [
@@ -994,7 +995,6 @@ function AppInner() {
         ]
       },
     ];
-
     return (
       <div style={s.wrap}>
         <NavBar />
@@ -1038,7 +1038,6 @@ function AppInner() {
       </div>
     );
   }
-
   // PÀGINES LEGALS SIMPLES
   if (page === "Privacitat" || page === "AvisLegal") {
     const titol = page === "Privacitat" ? "Política de Privacitat" : "Avís Legal";
@@ -1060,12 +1059,10 @@ function AppInner() {
       </div>
     );
   }
-
   // PÀGINA RESERVES
   if (page === "Reserves") {
     return <ReservesPage go={go} s={s} NavBar={NavBar} Footer={Footer} />;
   }
-
   // HOME
   return (
     <div style={s.wrap}>
@@ -1090,7 +1087,6 @@ function AppInner() {
           </svg>
         </div>
       </div>
-
       <div style={{ background: "#faf8f4", padding: "3.5rem 2rem 0" }}>
         <div style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}>
           <p style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#9a7a5a", letterSpacing: "0.12em", textTransform: "uppercase", margin: "0 0 1rem" }}>El Lloar · Priorat</p>
@@ -1112,10 +1108,9 @@ function AppInner() {
           </div>
         </div>
       </div>
-
       <div style={{ background: "#faf8f4", padding: "3rem 2rem 0" }}>
         <h2 style={{ fontFamily: "Georgia, serif", fontSize: 28, fontWeight: 500, color: "#3a2a18", textAlign: "center", margin: "0 0 0.4rem" }}>Habitacions</h2>
-        <p style={{ textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 14, color: "#999", margin: "0 0 2rem" }}>2 suites dobles · 1 suite quàdruple · Màx. 8 persones</p>
+        <p style={{ textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 14, color: "#999", margin: "0 0 2rem" }}>2 suites dobles · 1 suite quàdruple</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 16, maxWidth: 900, margin: "0 auto 3rem" }}>
           {ROOM_IMGS.map((r) => (
             <div key={r.label} onClick={() => go(r.label)} style={{ cursor: "pointer", position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "2/3", background: r.color }}>
@@ -1128,11 +1123,9 @@ function AppInner() {
           ))}
         </div>
       </div>
-
       <svg viewBox="0 0 1440 70" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ display: "block", width: "100%", height: 70, marginBottom: -1 }}>
         <path d="M0,0 C400,70 1000,10 1440,55 L1440,70 L0,70 Z" fill="#f0ebe2" />
       </svg>
-
       <div style={{ background: "#f0ebe2", padding: "2rem 2rem 0" }}>
         <h2 style={{ fontFamily: "Georgia, serif", fontSize: 28, fontWeight: 500, color: "#3a2a18", textAlign: "center", margin: "0 0 0.4rem" }}>La Casa</h2>
         <p style={{ textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 14, color: "#9a8060", margin: "0 0 2rem" }}>Casa de pedra restaurada al nucli d'El Lloar</p>
@@ -1147,11 +1140,9 @@ function AppInner() {
           ))}
         </div>
       </div>
-
       <svg viewBox="0 0 1440 70" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ display: "block", width: "100%", height: 70, marginBottom: -1 }}>
         <path d="M0,55 C500,0 900,70 1440,20 L1440,70 L0,70 Z" fill="#e8f0e0" />
       </svg>
-
       <div style={{ background: "#e8f0e0", padding: "2rem 2rem 0" }}>
         <h2 style={{ fontFamily: "Georgia, serif", fontSize: 28, fontWeight: 500, color: "#2a3a20", textAlign: "center", margin: "0 0 0.4rem" }}>L'Entorn</h2>
         <p style={{ textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 14, color: "#6a8060", margin: "0 0 2rem" }}>Vinyes, gorgs, cellers i paisatge de pissarra</p>
@@ -1166,11 +1157,9 @@ function AppInner() {
           ))}
         </div>
       </div>
-
       <svg viewBox="0 0 1440 70" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ display: "block", width: "100%", height: 70, marginBottom: -1 }}>
         <path d="M0,30 C360,70 1080,0 1440,45 L1440,70 L0,70 Z" fill="#fdf8f0" />
       </svg>
-
       <div style={{ background: "#fdf8f0", padding: "2rem 2rem 3.5rem" }}>
         <h2 style={{ fontFamily: "Georgia, serif", fontSize: 28, fontWeight: 500, color: "#3a2a18", textAlign: "center", margin: "0 0 0.4rem" }}>Serveis</h2>
         <p style={{ textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 14, color: "#9a8060", margin: "0 0 2.5rem" }}>Tot el que necessites per gaudir al màxim</p>
@@ -1183,12 +1172,10 @@ function AppInner() {
           ))}
         </div>
       </div>
-
       <Footer />
     </div>
   );
 }
-
 export default function App() {
   return (
     <ErrorBoundary>
