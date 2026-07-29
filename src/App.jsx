@@ -1,4 +1,37 @@
 // Casa Rural Bonavista — App.jsx
+// Versió: v2.8 — 21 juliol 2026
+// - Fix del botó "enrere" natiu (sobretot Android): la navegació interna
+//   (go) no tocava mai l'historial real del navegador, així que prémer
+//   "enrere" en una pestanya sortia directament de la web en lloc de
+//   tornar a la pàgina visitada abans. Ara cada "go" fa un pushState amb
+//   la pàgina, i un listener de "popstate" torna a la pàgina interna
+//   anterior en prémer "enrere".
+// Versió: v2.7 — 21 juliol 2026
+// - Nova secció "El Lloar, el poble" a dalt de tot de la pàgina L'Entorn:
+//   text descriptiu del poble (situació, extensió 6,80 km², la Moleta
+//   560m, història com a baronia de Cabacés/bisbat de Tortosa fins a la
+//   segregació de La Figuera durant la Guerra del Francès) + 5 targetes
+//   de llocs d'interès (Església de Sant Miquel d'Arcàngel, Piscina
+//   Municipal, Mirador del Priorat, Casal del Poble, La Botigueta).
+//   Dades del poble i de l'església contrastades amb la web oficial de
+//   l'Ajuntament del Lloar (lloar.altanet.org): l'església parroquial es
+//   va construir entre 1777 i 1778 — la referència a "segle XVII amb
+//   mamposteria i carreus" que es va indicar no queda confirmada per cap
+//   font i no s'ha inclòs.
+// - Afegida la ruta "Camí de les Bassetes del Lloar" a la secció de
+//   Senderisme i ciclisme (travessa les vinyes del celler Torres i el
+//   paratge de roca vermella dels Rogerals).
+// Versió: v2.6 — 21 juliol 2026
+// - Logo de la barra de navegació superior doblat de mida un altre cop
+//   (68px → 136px d'alçada). Alçada de la barra ampliada (100px → 170px)
+//   perquè hi càpiga còmodament, i posició del menú mòbil desplegable
+//   ajustada a la nova alçada. El logo del peu de pàgina (88px) no es toca.
+// Versió: v2.5 — 21 juliol 2026
+// - Preu del Pack Romàntic corregit: 120€ (abans 180€). Com que és una
+//   única constant (PACK_ROMANTIC_PREU) llegida arreu (targetes de la
+//   pestanya Pack Romàntic, preus combinats al pas "2. Suite" de
+//   Reserves, preuTotal), el canvi es propaga sol: Suite 1/2 passen de
+//   307€ a 247€ i Suite 3 de 362€ a 302€ (base + 120€).
 // Versió: v2.4 — 21 juliol 2026
 // - Fix: al pas "2. Suite" de Reserves, les targetes ara es filtren per
 //   capacitat segons el nombre de persones triat (Suite 1 i 2 només si
@@ -398,7 +431,7 @@ const BLOCKED = ["2026-04-10", "2026-04-11", "2026-04-12", "2026-04-13", "2026-0
 // pestanya "Pack Romàntic" (calendari propi, només 1 nit), que reenruta
 // cap al pas "2. Suite" de Reserves ja amb el mode Pack Romàntic actiu.
 // Mai se sopa al balcó.
-const PACK_ROMANTIC_PREU = 180;
+const PACK_ROMANTIC_PREU = 120;
 function ReservesPage({ go, s, NavBar, Footer, packSeed, onConsumSeed }) {
   const [any, setAny] = useState(2026);
   const [mes, setMes] = useState(3);
@@ -852,16 +885,36 @@ function AppInner() {
     }
     styleEl.textContent = mobileCSS;
   }
-  const go = (p) => setPage(p);
+  // Integració amb l'historial real del navegador: cada navegació interna
+  // (go) afegeix una entrada a l'historial, i el botó "enrere" natiu (molt
+  // important a Android) es respon amb "popstate" tornant a la pàgina
+  // interna anterior, en lloc de sortir de la web (que era el bug: com que
+  // abans no es tocava l'historial, "enrere" sortia directament del web).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.history.replaceState({ page: "Inici" }, "", window.location.pathname);
+    const onPopState = (e) => {
+      setPage((e.state && e.state.page) || "Inici");
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const go = (p) => {
+    setPage(p);
+    if (typeof window !== "undefined") {
+      window.history.pushState({ page: p }, "", window.location.pathname);
+    }
+  };
   const s = {
     wrap: { fontFamily: "'Georgia', serif", color: "#2c2a25", background: "#faf8f4" },
-    nav: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 2rem", height: 100, background: "#fff", borderBottom: "0.5px solid #e0dbd0", position: "sticky", top: 0, zIndex: 100 },
+    nav: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 2rem", height: 170, background: "#fff", borderBottom: "0.5px solid #e0dbd0", position: "sticky", top: 0, zIndex: 100 },
     logo: { fontWeight: 600, fontSize: 17, letterSpacing: "0.03em", color: "#5a3e28", fontFamily: "Georgia, serif", cursor: "pointer" },
     navBtn: (active) => ({ background: active ? "#f0ebe2" : "transparent", border: "none", padding: "6px 13px", borderRadius: 20, cursor: "pointer", fontSize: 13, color: active ? "#5a3e28" : "#777", fontWeight: active ? 600 : 400, fontFamily: "Arial, sans-serif" }),
   };
   const NavBar = () => (
     <nav style={s.nav}>
-      <img src="/logo.png" alt="Casa Rural Bonavista" onClick={() => { go("Inici"); setMenuObert(false); }} style={{ height: 68, cursor: "pointer", display: "block" }} />
+      <img src="/logo.png" alt="Casa Rural Bonavista" onClick={() => { go("Inici"); setMenuObert(false); }} style={{ height: 136, cursor: "pointer", display: "block" }} />
       <div style={{ display: "flex", gap: 2 }} className="nav-desktop">
         {NAV.map(n => <button key={n} style={s.navBtn(page === n)} onClick={() => go(n)}>{n}</button>)}
       </div>
@@ -869,7 +922,7 @@ function AppInner() {
         {menuObert ? "✕" : "☰"}
       </button>
       {menuObert && (
-        <div style={{ position: "absolute", top: 100, left: 0, right: 0, background: "#fff", borderBottom: "0.5px solid #e0dbd0", zIndex: 200, padding: "0.5rem 0" }}>
+        <div style={{ position: "absolute", top: 170, left: 0, right: 0, background: "#fff", borderBottom: "0.5px solid #e0dbd0", zIndex: 200, padding: "0.5rem 0" }}>
           {NAV.map(n => (
             <button key={n} onClick={() => { go(n); setMenuObert(false); }} style={{ display: "block", width: "100%", textAlign: "left", background: page === n ? "#f0ebe2" : "transparent", border: "none", padding: "12px 2rem", cursor: "pointer", fontSize: 15, color: page === n ? "#5a3e28" : "#555", fontWeight: page === n ? 600 : 400, fontFamily: "Arial, sans-serif" }}>
               {n}
@@ -1105,6 +1158,7 @@ function AppInner() {
           { nom: "GR-174 · Ruta del Priorat", lloc: "Comarca del Priorat", data: "Tot l'any", desc: "Travessa diversos pobles del Priorat passant per Gratallops i amb connexió directa amb El Lloar." },
           { nom: "Camins del Siurana", lloc: "El Lloar – Gratallops – Bellmunt", data: "Tot l'any", desc: "Xarxa de camins històrics entre pobles de la comarca. Ideals per a caminades tranquil·les." },
           { nom: "Vinyes a vista d'ocell", lloc: "El Lloar → Damunt Roca → Rogerals", data: "Tot l'any", desc: "Excursió circular des del Lloar amb panorames espectaculars, vinyes i contrastos geològics entre pissarres, gresos i calcàries. Apta per a tothom, recomanable amb nens. Els més caminadors poden arribar fins a La Figuera pel GR-171." },
+          { nom: "Camí de les Bassetes del Lloar", lloc: "El Lloar", data: "Tot l'any", desc: "Sender perfectament senyalitzat que travessa les vinyes del celler Torres i el pintoresc paratge de roca vermella dels Rogerals." },
           { nom: "Rutes BTT del Priorat", lloc: "Gratallops · Bellmunt · El Lloar", data: "Tot l'any", desc: "Xarxa oficial Centre BTT Priorat. Traçats que connecten amb El Lloar." },
           { nom: "Carretera del vi (cicloturisme)", lloc: "Falset – Gratallops – El Lloar", data: "Tot l'any", desc: "Ruta circular molt popular entre ciclistes. El Lloar és parada obligada." },
         ]
@@ -1139,6 +1193,36 @@ function AppInner() {
         </div>
         <div style={{ maxWidth: 900, margin: "0 auto", padding: "2rem 2rem 3rem" }}>
           <BackBtn to="Inici" label="Tornar a l'inici" />
+          <div style={{ marginBottom: 48 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, paddingBottom: 12, borderBottom: "0.5px solid #e0dbd0" }}>
+              <span style={{ fontSize: 28 }}>🏘️</span>
+              <h2 style={{ fontFamily: "Georgia, serif", fontSize: 24, fontWeight: 500, color: "#3a2a18", margin: 0 }}>El Lloar, el poble</h2>
+            </div>
+            <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666", lineHeight: 1.9, marginBottom: 16 }}>
+              Situat als contraforts sud-occidentals del Montsant, a la part oest de la comarca, El Lloar és un dels pobles més autèntics del Priorat: terra de vins i paisatges on la vinya és la protagonista, envoltat de muntanyes, valls i coves, i travessat pel riu Montsant poc abans de la seva unió amb el Siurana. El nucli antic, amb cases de pedra, conserva un ambient rural molt característic.
+            </p>
+            <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666", lineHeight: 1.9, marginBottom: 24 }}>
+              Amb una extensió de 6,80 km² i la Moleta (560 m) com a principal elevació, el poble va formar part de la baronia de Cabacés des de la seva fundació, sota l'autoritat del bisbat de Tortosa, fins que es va constituir com a municipi autònom amb ajuntament propi durant la Guerra del Francès, segregant-se de La Figuera.
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
+              {[
+                { nom: "Església de Sant Miquel d'Arcàngel", lloc: "Plaça de l'Església", data: "Visita lliure", desc: "Església parroquial construïda entre 1777 i 1778." },
+                { nom: "Piscina Municipal", lloc: "Carrer Masons, s/n", data: "Temporada d'estiu", desc: "Piscina municipal a l'aire lliure." },
+                { nom: "Mirador del Priorat", lloc: "Carrer de Sant Miquel", data: "Sempre obert", desc: "Balconada natural amb vistes magnífiques al riu Montsant." },
+                { nom: "Casal del Poble", lloc: "Carrer del Pla Moré, 2", data: "Bar-cafeteria", desc: "Menjars i productes de proximitat." },
+                { nom: "La Botigueta", lloc: "Plaça Església, 2", data: "Botiga", desc: "Queviures i degustació de productes locals." },
+              ].map(item => (
+                <div key={item.nom} style={{ background: "#faf8f4", border: "0.5px solid #e0dbd0", borderRadius: 12, padding: "1.25rem" }}>
+                  <div style={{ fontFamily: "Georgia, serif", fontSize: 15, fontWeight: 600, color: "#3a2a18", marginBottom: 4 }}>{item.nom}</div>
+                  <div style={{ display: "flex", gap: 12, marginBottom: 8 }}>
+                    <span style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#9a7a5a" }}>📍 {item.lloc}</span>
+                    <span style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#9a7a5a" }}>ℹ️ {item.data}</span>
+                  </div>
+                  <p style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#666", lineHeight: 1.7, margin: 0 }}>{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
           {seccions.map(seccio => (
             <div key={seccio.id} style={{ marginBottom: 48 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, paddingBottom: 12, borderBottom: "0.5px solid #e0dbd0" }}>
