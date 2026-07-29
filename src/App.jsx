@@ -1,4 +1,33 @@
 // Casa Rural Bonavista — App.jsx
+// Versió: v2.9 — 21 juliol 2026
+// - Descripcions de Suite 1 i Suite 2 actualitzades (bany, llum natural).
+// - Suite 3: nova descripció (referència verificada a la Destinació
+//   Turística Starlight del Priorat, des de 2021). Nom públic afegit
+//   ('Suite "La Principal"') via el nou camp SUITES[].nomPublic i la
+//   funció nomVisible(id) — "Suite 3" es manté com a IDENTIFICADOR INTERN
+//   (clau de TARIFES, valor de pàgina, camp enviat a /api/reserva) per no
+//   trencar preus ni el backend; només canvia el que es mostra. ROOM_IMGS
+//   ara es deriva de SUITES (abans era una còpia manual: hauria pogut
+//   desincronitzar id de navegació i text mostrat en renombrar).
+// - Capacitat mostrada de la Suite 3: "2/4 persones" via nou camp
+//   capacitatText (capacitat numèrica intacta per al filtre de pax).
+// - "Balcó privatiu" → "Balcó privat" a tot arreu.
+// - Afegit "· Preu per a 2 persones" a la barra de preu de cada suite.
+// - Pack Romàntic: "nit dolça" → "nit màgica"; llista d'inclosos
+//   actualitzada (vi, sopar amb ambient romàntic, detall de benvinguda).
+// - Treta "cuina independent" de la descripció de La Casa.
+// - Dates de "Fires del vi" sense any (només dia/setmana/mes).
+// - "Història i patrimoni": afegides Mines de Bellmunt del Priorat i Ruta
+//   de l'Oli del Priorat (dades verificades).
+// - Nova secció "Esdeveniments" a L'Entorn: Fira del Vi d'El Lloar, Festa
+//   Major d'Estiu, Festa Major de Sant Miquel (dades de l'Ajuntament del
+//   Lloar, sense any). No s'hi ha afegit cap concert: no se n'ha trobat
+//   cap de confirmat.
+// - Subtítol de L'Entorn: afegida "gastronomia".
+// - Eliminat el requadre "Aparcament" a Contacte.
+// PENDENT (posposat expressament): confirmar recepció real d'email a
+// contacta@casaruralbonavista.cat des del formulari de Reserves — una
+// prova recent no va arribar; es reprendrà un cop aplicats aquests canvis.
 // Versió: v2.8 — 21 juliol 2026
 // - Fix del botó "enrere" natiu (sobretot Android): la navegació interna
 //   (go) no tocava mai l'historial real del navegador, així que prémer
@@ -180,11 +209,14 @@ const SERVICES = [
   { icon: "🍸", label: "Gin & Tonic" },
 ];
 // Numeració de suites (fixada): Suite 1 = petita, Suite 2 = mitjana,
-// Suite 3 = quàdruple amb balcó privatiu (la "més especial").
+// Suite 3 = quàdruple amb balcó privat (la "més especial").
+// "Suite 3" es manté com a IDENTIFICADOR INTERN (clau de TARIFES, valor de
+// pàgina, camp enviat per email al backend) — mai es toca. El nom que es
+// mostra als visitants és nomPublic (si existeix), veure nomVisible().
 const SUITES = [
   {
-    id: "Suite 1", tipus: "Doble", color: "#9a8a72", capacitat: 2,
-    descripcio: "Suite doble, la més petita de la casa, amb tots els elements per a una estada perfecta al Priorat. Tranquil·litat, confort i l'encant d'una casa de pedra restaurada al nucli d'El Lloar.",
+    id: "Suite 1", nomPublic: null, tipus: "Doble", color: "#9a8a72", capacitat: 2, capacitatText: "2",
+    descripcio: "Suite doble amb bany, llum natural, equipada amb tots els elements per a una estada perfecta al Priorat. Tranquil·litat, confort i l'encant d'una casa de pedra restaurada al nucli d'El Lloar.",
     extras: ["Esmorzar inclòs"], badge: null,
     fotos: [
       { color: "#9a8a72", alt: "Suite 1 — Vista general" },
@@ -195,8 +227,8 @@ const SUITES = [
     ]
   },
   {
-    id: "Suite 2", tipus: "Doble", color: "#c4b09a", capacitat: 2,
-    descripcio: "Suite doble de mida mitjana, amb caràcter rural i tots els serveis moderns. Perfecta per a una escapada en parella al cor del Priorat.",
+    id: "Suite 2", nomPublic: null, tipus: "Doble", color: "#c4b09a", capacitat: 2, capacitatText: "2",
+    descripcio: "Suite doble amb bany, llum natural, equipada amb tots els elements per a una estada perfecta al Priorat. Perfecta per a una escapada en parella al cor del Priorat.",
     extras: ["Esmorzar inclòs"], badge: null,
     fotos: [
       { color: "#c4b09a", alt: "Suite 2 — Vista general" },
@@ -207,9 +239,9 @@ const SUITES = [
     ]
   },
   {
-    id: "Suite 3", tipus: "Quàdruple · Balcó privatiu", color: "#b5a48a", capacitat: 4,
-    descripcio: "La Suite 3 és la més especial de la casa. Disposa d'un balcó privatiu on podeu posar cadires i gaudir d'una vista magnífica de la comarca — ideal per esmorzar o fer un vermut. Esmorzar inclòs a la tarifa.",
-    extras: ["Balcó privatiu amb vistes", "Esmorzar inclòs"],
+    id: "Suite 3", nomPublic: 'Suite "La Principal"', tipus: "Quàdruple · Balcó privat", color: "#b5a48a", capacitat: 4, capacitatText: "2/4",
+    descripcio: "La Principal és la suite més especial de la casa. Disposa d'un balcó privat on podeu seure i gaudir d'una vista magnífica de la comarca. Ideal per gaudir de cel nocturn reconegut com a \"Destinació Turística Starlight\".",
+    extras: ["Balcó privat amb vistes", "Esmorzar inclòs"],
     badge: "La més especial",
     fotos: [
       { color: "#b5a48a", alt: "Suite 3 — Vista general" },
@@ -226,11 +258,16 @@ const SUITE_AMENITIES = [
   { icon: "❄️", label: "Aire condicionat" }, { icon: "🔥", label: "Calefacció" },
   { icon: "💻", label: "Escriptori" }, { icon: "📶", label: "Fibra i WiFi" },
 ];
-const ROOM_IMGS = [
-  { label: "Suite 1", color: "#9a8a72" },
-  { label: "Suite 2", color: "#c4b09a" },
-  { label: "Suite 3", color: "#b5a48a" },
-];
+// Nom mostrat als visitants per a un id de suite intern: fa servir
+// nomPublic si la suite en té (p. ex. Suite 3 → 'Suite "La Principal"'),
+// i si no, l'id tal qual (Suite 1 / Suite 2).
+const nomVisible = (id) => {
+  const su = SUITES.find(s => s.id === id);
+  return (su && su.nomPublic) || id;
+};
+// Derivat de SUITES (font única de veritat) perquè id (navegació) i
+// etiqueta (text mostrat) no es puguin desincronitzar.
+const ROOM_IMGS = SUITES.map(su => ({ id: su.id, label: nomVisible(su.id), color: su.color }));
 const HOUSE_IMGS = [{ color: "#c8b89a" }, { color: "#baa88a" }, { color: "#d4c4a8" }];
 const ENTORN_IMGS = [{ color: "#7a9a68" }, { color: "#8aaa78" }, { color: "#6a8a58" }];
 const FOTOS_CASA = [
@@ -378,7 +415,6 @@ function ContactePage({ go, s, NavBar, Footer, BackBtn }) {
               { icon: "🚗", title: "Des de Barcelona", text: "AP-2 / N-420 fins a Falset, T-710 fins a Gratallops i T-712 fins a El Lloar. Aprox. 1h 45min." },
               { icon: "🚗", title: "Des de Tarragona", text: "N-420 fins a Falset, T-710 i T-712. Aprox. 1h 15min." },
               { icon: "🚗", title: "Des de Lleida", text: "C-12 fins a Garcia, N-420 fins a Falset, T-710 i T-712. Aprox. 1h 30min." },
-              { icon: "🅿️", title: "Aparcament", text: "Aparcament gratuït disponible al costat de la casa." },
             ].map(item => (
               <div key={item.title} style={{ background: "#fff", border: "0.5px solid #e8e0d0", borderRadius: 12, padding: "1rem 1.25rem" }}>
                 <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
@@ -622,7 +658,7 @@ function ReservesPage({ go, s, NavBar, Footer, packSeed, onConsumSeed }) {
                 <h3 style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 500, color: "#3a2a18", marginTop: 0 }}>Tarifes</h3>
                 {Object.entries(TARIFES).map(([suite, t]) => (
                   <div key={suite} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "0.5px solid #e0dbd0", fontFamily: "Arial, sans-serif", fontSize: 13 }}>
-                    <span style={{ color: "#666" }}>{suite}</span>
+                    <span style={{ color: "#666" }}>{nomVisible(suite)}</span>
                     <span style={{ fontWeight: 600, color: "#5a3e28" }}>{t.preu}€<span style={{ fontWeight: 400, color: "#999" }}>/nit</span>{suite === "Suite 3" ? <span style={{ color: "#aaa", fontSize: 11 }}> [2 persones] +{t.extra}€/pax extra</span> : ""}</span>
                   </div>
                 ))}
@@ -661,8 +697,8 @@ function ReservesPage({ go, s, NavBar, Footer, packSeed, onConsumSeed }) {
                 const sel = suiteEsc === suite;
                 return (
                   <div key={suite} onClick={() => setSuiteEsc(suite)} style={{ cursor: "pointer", background: "#fff", border: sel ? "2px solid #5a3e28" : "0.5px solid #e0dbd0", borderRadius: 12, padding: "1.5rem" }}>
-                    <div style={{ fontFamily: "Georgia, serif", fontSize: 18, fontWeight: 600, color: "#3a2a18", marginBottom: 4 }}>{suite}</div>
-                    <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#9a8060", marginBottom: 12 }}>{packRomantic ? "💐 Pack Romàntic inclòs" : suite === "Suite 3" ? "Quàdruple · Balcó privatiu" : "Doble"}</div>
+                    <div style={{ fontFamily: "Georgia, serif", fontSize: 18, fontWeight: 600, color: "#3a2a18", marginBottom: 4 }}>{nomVisible(suite)}</div>
+                    <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#9a8060", marginBottom: 12 }}>{packRomantic ? "💐 Pack Romàntic inclòs" : suite === "Suite 3" ? "Quàdruple · Balcó privat" : "Doble"}</div>
                     <div style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 600, color: "#5a3e28", marginBottom: 4 }}>{preu}€</div>
                     <div style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#aaa", marginBottom: 12 }}>total {nits} nit{nits > 1 ? "s" : ""}{suite === "Suite 3" && pax > 2 ? ` (incl. ${pax - 2} pax extra)` : ""}</div>
                     <div style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#5a3e28" }}>✓ Esmorzar inclòs · Estada mín. 2 nits</div>
@@ -672,7 +708,7 @@ function ReservesPage({ go, s, NavBar, Footer, packSeed, onConsumSeed }) {
               })}
             </div>
             {suiteEsc && (
-              <button onClick={() => setStep(3)} style={{ background: "#5a3e28", color: "#fff", border: "none", width: "100%", padding: "14px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 15, cursor: "pointer", fontWeight: 600, marginTop: 24 }}>Continuar amb {suiteEsc} — {calcPreu(suiteEsc) + (packRomantic ? PACK_ROMANTIC_PREU : 0)}€ →</button>
+              <button onClick={() => setStep(3)} style={{ background: "#5a3e28", color: "#fff", border: "none", width: "100%", padding: "14px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 15, cursor: "pointer", fontWeight: 600, marginTop: 24 }}>Continuar amb {nomVisible(suiteEsc)} — {calcPreu(suiteEsc) + (packRomantic ? PACK_ROMANTIC_PREU : 0)}€ →</button>
             )}
           </div>
         )}
@@ -680,7 +716,7 @@ function ReservesPage({ go, s, NavBar, Footer, packSeed, onConsumSeed }) {
           <div style={{ maxWidth: 560, margin: "0 auto" }}>
             <button onClick={() => setStep(2)} style={{ background: "none", border: "none", color: "#5a3e28", cursor: "pointer", fontFamily: "Arial, sans-serif", fontSize: 14, marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}>← Canviar suite</button>
             <div style={{ background: "#f0ebe2", borderRadius: 12, padding: "1rem 1.5rem", marginBottom: 16, display: "flex", justifyContent: "space-between", fontFamily: "Arial, sans-serif", fontSize: 14 }}>
-              <span style={{ color: "#5a3e28", fontWeight: 600 }}>{suiteEsc}{packRomantic ? " + Pack Romàntic" : ""}</span>
+              <span style={{ color: "#5a3e28", fontWeight: 600 }}>{nomVisible(suiteEsc)}{packRomantic ? " + Pack Romàntic" : ""}</span>
               <span style={{ color: "#5a3e28", fontWeight: 600 }}>{preuTotal}€</span>
             </div>
             {[["Nom complet", "nom", "text"], ["Email", "email", "email"], ["Telèfon", "tel", "tel"]].map(([lbl, field, type]) => (
@@ -723,7 +759,7 @@ function ReservesPage({ go, s, NavBar, Footer, packSeed, onConsumSeed }) {
             <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
             <h2 style={{ fontFamily: "Georgia, serif", fontSize: 24, color: "#3a2a18", fontWeight: 500 }}>Sol·licitud enviada!</h2>
             <p style={{ fontFamily: "Arial, sans-serif", fontSize: 15, color: "#666", lineHeight: 1.8 }}>
-              Hem rebut la teva sol·licitud per <strong>{suiteEsc}</strong>{packRomantic ? <> amb <strong>Pack Romàntic</strong> per la nit del <strong>{dataInici ? formatData(dataInici) : ""}</strong></> : ""}.<br />
+              Hem rebut la teva sol·licitud per <strong>{nomVisible(suiteEsc)}</strong>{packRomantic ? <> amb <strong>Pack Romàntic</strong> per la nit del <strong>{dataInici ? formatData(dataInici) : ""}</strong></> : ""}.<br />
               Et contactarem en menys de 24 hores a <strong>{form.email}</strong> per confirmar la reserva i les instruccions de pagament.
             </p>
             <button onClick={() => { setStep(1); setDataInici(null); setDataFi(null); setSuiteEsc(null); setEnviat(false); setIntentValidarReserva(false); setErrorEnviamentReserva(""); setForm({ nom: "", email: "", tel: "", notes: "", consent: false }); setPackRomantic(false); go("Inici"); }} style={{ background: "#5a3e28", color: "#fff", border: "none", padding: "12px 32px", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 14, cursor: "pointer", marginTop: 16 }}>Tornar a l'inici</button>
@@ -782,7 +818,7 @@ function PackRomanticPage({ go, s, NavBar, Footer, BackBtn, onIniciarReserva }) 
         <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)" }} />
         <div style={{ position: "relative", zIndex: 2 }}>
           <h1 style={{ fontFamily: "Georgia, serif", fontSize: 36, color: "#fff", margin: 0 }}>Pack Romàntic</h1>
-          <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#f0e8d8", margin: "4px 0 0" }}>Una nit dolça al cor del Priorat</p>
+          <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#f0e8d8", margin: "4px 0 0" }}>Una nit màgica al cor del Priorat</p>
         </div>
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}>
           <svg viewBox="0 0 1440 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ display: "block", width: "100%", height: 40 }}>
@@ -797,7 +833,7 @@ function PackRomanticPage({ go, s, NavBar, Footer, BackBtn, onIniciarReserva }) 
         </div>
         <p style={{ fontFamily: "Arial, sans-serif", fontSize: 15, color: "#666", lineHeight: 1.9 }}>Disfruteu en parella d'una experiència inoblidable. El Pack Romàntic inclou:</p>
         <div style={{ marginBottom: 32 }}>
-          {["Obsequi ampolla de vi negre DOQ Priorat.", "Espelmes a la taula especial de sopar."].map(item => (
+          {["Obsequi ampolla de vi negre DOQ Priorat.", "Sopar exclusiu amb ambient romàntic.", "Detall de benvinguda."].map(item => (
             <div key={item} style={{ display: "flex", gap: 10, marginBottom: 8, alignItems: "flex-start" }}>
               <span style={{ color: "#5a3e28" }}>✓</span>
               <span style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666", lineHeight: 1.6 }}>{item}</span>
@@ -845,7 +881,7 @@ function PackRomanticPage({ go, s, NavBar, Footer, BackBtn, onIniciarReserva }) 
               <h3 style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 500, color: "#3a2a18", marginTop: 0 }}>Una nit Pack Romàntic</h3>
               {SUITES.map(su => (
                 <div key={su.id} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "0.5px solid #e0dbd0", fontFamily: "Arial, sans-serif", fontSize: 13 }}>
-                  <span style={{ color: "#666" }}>{su.id}</span>
+                  <span style={{ color: "#666" }}>{nomVisible(su.id)}</span>
                   <span style={{ fontWeight: 600, color: "#5a3e28" }}>{TARIFES[su.id].preu + PACK_ROMANTIC_PREU}€<span style={{ fontWeight: 400, color: "#999" }}> una nit</span></span>
                 </div>
               ))}
@@ -989,8 +1025,8 @@ function AppInner() {
                     <span style={{ fontSize: 48 }}>🛏️</span>
                   </div>
                   <div style={{ padding: "1.25rem" }}>
-                    <div style={{ fontFamily: "Georgia, serif", fontSize: 20, fontWeight: 600, color: "#3a2a18", marginBottom: 4 }}>{suite.id}</div>
-                    <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#9a8060", marginBottom: 4 }}>{suite.tipus} · {suite.capacitat} persones</div>
+                    <div style={{ fontFamily: "Georgia, serif", fontSize: 20, fontWeight: 600, color: "#3a2a18", marginBottom: 4 }}>{nomVisible(suite.id)}</div>
+                    <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#9a8060", marginBottom: 4 }}>{suite.tipus} · {suite.capacitatText} persones</div>
                     <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#5a3e28", fontWeight: 600, marginBottom: 12 }}>{TARIFES[suite.id].preu}€ <span style={{ color: "#9a8060", fontWeight: 400 }}>/nit</span></div>
                     <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#5a3e28", fontWeight: 600 }}>Veure detalls →</div>
                   </div>
@@ -1013,8 +1049,8 @@ function AppInner() {
           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.25)" }} />
           <div style={{ position: "relative", zIndex: 2 }}>
             {suiteActual.badge && <span style={{ background: "#5a3e28", color: "#fff", fontSize: 11, padding: "4px 10px", borderRadius: 20, fontFamily: "Arial, sans-serif", fontWeight: 600, display: "inline-block", marginBottom: 8 }}>{suiteActual.badge}</span>}
-            <h1 style={{ fontFamily: "Georgia, serif", fontSize: 36, color: "#fff", margin: "0 0 4px", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>{suiteActual.id}</h1>
-            <p style={{ fontFamily: "Arial, sans-serif", fontSize: 15, color: "#f0e8d8", margin: 0 }}>{suiteActual.tipus} · Màx. {suiteActual.capacitat} persones</p>
+            <h1 style={{ fontFamily: "Georgia, serif", fontSize: 36, color: "#fff", margin: "0 0 4px", textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>{nomVisible(suiteActual.id)}</h1>
+            <p style={{ fontFamily: "Arial, sans-serif", fontSize: 15, color: "#f0e8d8", margin: 0 }}>{suiteActual.tipus} · {suiteActual.capacitatText} persones</p>
           </div>
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}>
             <svg viewBox="0 0 1440 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ display: "block", width: "100%", height: 40 }}>
@@ -1054,7 +1090,7 @@ function AppInner() {
           <div style={{ marginTop: 32, background: "#f0ebe2", borderRadius: 12, padding: "1.5rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
             <div>
               <div style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 600, color: "#3a2a18" }}>{TARIFES[suiteActual.id].preu}€ <span style={{ fontSize: 14, fontWeight: 400, color: "#999", fontFamily: "Arial, sans-serif" }}>/nit</span></div>
-              <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#9a8060" }}>Esmorzar inclòs · Estada mínima 2 nits</div>
+              <div style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#9a8060" }}>Esmorzar inclòs · Estada mínima 2 nits · Preu per a 2 persones</div>
             </div>
             <button onClick={() => go("Reserves")} style={{ background: "#5a3e28", color: "#fff", border: "none", padding: "12px 32px", borderRadius: 8, fontSize: 15, cursor: "pointer", fontFamily: "Arial, sans-serif", fontWeight: 600 }}>Reservar</button>
           </div>
@@ -1090,7 +1126,7 @@ function AppInner() {
             <div>
               <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 500, color: "#3a2a18", marginTop: 0 }}>La Casa</h2>
               <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666", lineHeight: 1.9 }}>Casa de pedra restaurada amb respecte pels materials originals — les vigues de fusta, la pedra vista i els terres de rajola tradicional conviuen amb totes les comoditats modernes.</p>
-              <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666", lineHeight: 1.9 }}>A la planta baixa hi trobareu el vestíbul d'accés, un ampli menjador i sala d'estar amb llar de foc, cuina independent i una gran terrassa exclusiva per als clients amb vistes al riu Montsant i a la Vall de Gratallops.</p>
+              <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666", lineHeight: 1.9 }}>A la planta baixa hi trobareu el vestíbul d'accés, un ampli menjador i sala d'estar amb llar de foc i una gran terrassa exclusiva per als clients amb vistes al riu Montsant i a la Vall de Gratallops.</p>
               <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666", lineHeight: 1.9 }}>Les tres suites se situen al primer pis, cadascuna amb accés independent i vistes a la comarca.</p>
             </div>
             <div>
@@ -1143,12 +1179,12 @@ function AppInner() {
       {
         id: "fires", icon: "🍷", titol: "Fires del vi", color: "#f0ebe2",
         items: [
-          { nom: "Fira del Vi de Falset", lloc: "Falset", data: "1–4 maig 2026", desc: "La fira de referència de la comarca. Tastos, venda directa i activitats. Dilluns 4: jornada professional B2B." },
-          { nom: "Tast de Carinyenes", lloc: "Porrera", data: "1 maig 2026", desc: "Sempre el divendres més proper a l'1 de maig. Sincronitzat amb la Fira de Falset." },
-          { nom: "Nit de les Garnatxes", lloc: "Capçanes", data: "1 maig 2026 (nit)", desc: "Celebració nocturna de la garnatxa. Sincronitzada amb la Fira del Vi." },
-          { nom: "Poboleda Vins", lloc: "Poboleda", data: "Abril 2026 (2a quinzena)", desc: "Habitualment dues setmanes abans de la Fira de Falset." },
-          { nom: "Fira del Vi de Gratallops", lloc: "Gratallops", data: "Juny 2026", desc: "A 5 minuts d'El Lloar. Habitualment a mitjans de juny." },
-          { nom: "Fira de cooperatives del Priorat", lloc: "Falset", data: "Dissabte Sant 2026", desc: "Data variable segons Setmana Santa cada any." },
+          { nom: "Fira del Vi de Falset", lloc: "Falset", data: "1–4 maig", desc: "La fira de referència de la comarca. Tastos, venda directa i activitats. Dilluns: jornada professional B2B." },
+          { nom: "Tast de Carinyenes", lloc: "Porrera", data: "1 maig", desc: "Sempre el divendres més proper a l'1 de maig. Sincronitzat amb la Fira de Falset." },
+          { nom: "Nit de les Garnatxes", lloc: "Capçanes", data: "1 maig (nit)", desc: "Celebració nocturna de la garnatxa. Sincronitzada amb la Fira del Vi." },
+          { nom: "Poboleda Vins", lloc: "Poboleda", data: "2a quinzena d'abril", desc: "Habitualment dues setmanes abans de la Fira de Falset." },
+          { nom: "Fira del Vi de Gratallops", lloc: "Gratallops", data: "Juny", desc: "A 5 minuts d'El Lloar. Habitualment a mitjans de juny." },
+          { nom: "Fira de cooperatives del Priorat", lloc: "Falset", data: "Dissabte Sant", desc: "Data variable segons Setmana Santa cada any." },
         ]
       },
       {
@@ -1172,6 +1208,16 @@ function AppInner() {
           { nom: "Església de Sant Miquel", lloc: "El Lloar", data: "Visita lliure", desc: "Construïda entre 1777 i 1778. Estil neoclàssic amb tres naus, cor, cimbori i campanar. Bé Cultural d'Interès Local." },
           { nom: "Mirador del Priorat", lloc: "Carrer de Sant Miquel, El Lloar", data: "Sempre obert", desc: "Balconada natural al cor del poble amb vistes magnífiques al riu Montsant al fons de la vall." },
           { nom: "Coves dels Rogerals", lloc: "1,5 km del poble", data: "Visita lliure", desc: "Conjunt de coves prehistòriques prop del Nas del Quiuma (gran bloc d'arenisca rogenca) i la font de Minfami, d'origen sarraí." },
+          { nom: "Mines de Bellmunt del Priorat", lloc: "Bellmunt del Priorat", data: "Visita guiada (reserva prèvia)", desc: "Antic complex miner-metal·lúrgic, el més important de Catalunya en extracció de plom. Visita guiada d'uns 45 minuts recorrent 700 metres de galeries." },
+          { nom: "Ruta de l'Oli del Priorat", lloc: "Diversos municipis de la comarca", data: "Tot l'any", desc: "Recorregut per vuit molins i cooperatives de la comarca, amb tast dels millors olis d'oliva verges extra i altres productes locals." },
+        ]
+      },
+      {
+        id: "esdeveniments", icon: "🎉", titol: "Esdeveniments", color: "#f0ebe2",
+        items: [
+          { nom: "Fira del Vi d'El Lloar", lloc: "El Lloar", data: "Últim dissabte de juliol", desc: "Fira del vi local, amb cellers d'El Lloar i pobles veïns." },
+          { nom: "Festa Major d'Estiu", lloc: "El Lloar", data: "1r cap de setmana d'agost", desc: "Ball amb orquestra, discomòbils, cercavila i altres activitats per a tots els públics." },
+          { nom: "Festa Major de Sant Miquel", lloc: "El Lloar", data: "Dissabte més proper al 29 de setembre", desc: "Espectacle musical o activitat acompanyada d'un sopar popular." },
         ]
       },
     ];
@@ -1183,7 +1229,7 @@ function AppInner() {
           <div style={{ position: "relative", zIndex: 2 }}>
             <p style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#d0f0d0", letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 6px" }}>Priorat · Catalunya</p>
             <h1 style={{ fontFamily: "Georgia, serif", fontSize: 36, color: "#fff", margin: 0, textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>L'Entorn</h1>
-            <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#d0e8d0", margin: "4px 0 0" }}>Vi, natura, història i cultura al Priorat</p>
+            <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#d0e8d0", margin: "4px 0 0" }}>Vi, gastronomia, natura, història i cultura al Priorat</p>
           </div>
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}>
             <svg viewBox="0 0 1440 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ display: "block", width: "100%", height: 40 }}>
@@ -1327,7 +1373,7 @@ function AppInner() {
         <p style={{ textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 14, color: "#999", margin: "0 0 2rem" }}>2 suites dobles · 1 suite quàdruple</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 16, maxWidth: 900, margin: "0 auto 3rem" }}>
           {ROOM_IMGS.map((r) => (
-            <div key={r.label} onClick={() => go(r.label)} style={{ cursor: "pointer", position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "2/3", background: r.color }}>
+            <div key={r.id} onClick={() => go(r.id)} style={{ cursor: "pointer", position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "2/3", background: r.color }}>
               <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.28)" }} />
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "1rem", background: "linear-gradient(to top, rgba(0,0,0,0.6), transparent)" }}>
                 <p style={{ margin: 0, fontFamily: "Georgia, serif", fontSize: 18, fontWeight: 600, color: "#fff" }}>{r.label}</p>
