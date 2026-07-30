@@ -1,4 +1,15 @@
 // Casa Rural Bonavista — App.jsx
+// Versió: v2.10 — 30 juliol 2026
+// - Inici: "DO Priorat a la porta" → "DOQ Priorat a la porta" (denominació
+//   correcta: DOQ Priorat).
+// - L'Entorn: "Fira del Vi de Gratallops" → "Tastets de Gratallops"; data
+//   "Juny" → "14 de novembre"; afegit enllaç a
+//   https://www.tastetsdegratallops.com/
+// - L'Entorn ("El Lloar, el poble"): afegit enllaç de Google Maps a
+//   "Casal del Poble" (https://maps.app.goo.gl/6aBfdGkHpPT7f7949).
+// - Afegit camp opcional item.url + enllaç "Obrir enllaç →" a les dues
+//   graelles de targetes de L'Entorn (poble i seccions), reutilitzable
+//   per a futurs enllaços similars.
 // Versió: v2.9 — 21 juliol 2026
 // - Descripcions de Suite 1 i Suite 2 actualitzades (bany, llum natural).
 // - Suite 3: nova descripció (referència verificada a la Destinació
@@ -1183,7 +1194,7 @@ function AppInner() {
           { nom: "Tast de Carinyenes", lloc: "Porrera", data: "1 maig", desc: "Sempre el divendres més proper a l'1 de maig. Sincronitzat amb la Fira de Falset." },
           { nom: "Nit de les Garnatxes", lloc: "Capçanes", data: "1 maig (nit)", desc: "Celebració nocturna de la garnatxa. Sincronitzada amb la Fira del Vi." },
           { nom: "Poboleda Vins", lloc: "Poboleda", data: "2a quinzena d'abril", desc: "Habitualment dues setmanes abans de la Fira de Falset." },
-          { nom: "Fira del Vi de Gratallops", lloc: "Gratallops", data: "Juny", desc: "A 5 minuts d'El Lloar. Habitualment a mitjans de juny." },
+          { nom: "Tastets de Gratallops", lloc: "Gratallops", data: "14 de novembre", desc: "A 5 minuts d'El Lloar.", url: "https://www.tastetsdegratallops.com/" },
           { nom: "Fira de cooperatives del Priorat", lloc: "Falset", data: "Dissabte Sant", desc: "Data variable segons Setmana Santa cada any." },
         ]
       },
@@ -1255,7 +1266,7 @@ function AppInner() {
                 { nom: "Església de Sant Miquel d'Arcàngel", lloc: "Plaça de l'Església", data: "Visita lliure", desc: "Església parroquial construïda entre 1777 i 1778." },
                 { nom: "Piscina Municipal", lloc: "Carrer Masons, s/n", data: "Temporada d'estiu", desc: "Piscina municipal a l'aire lliure." },
                 { nom: "Mirador del Priorat", lloc: "Carrer de Sant Miquel", data: "Sempre obert", desc: "Balconada natural amb vistes magnífiques al riu Montsant." },
-                { nom: "Casal del Poble", lloc: "Carrer del Pla Moré, 2", data: "Bar-cafeteria", desc: "Menjars i productes de proximitat." },
+                { nom: "Casal del Poble", lloc: "Carrer del Pla Moré, 2", data: "Bar-cafeteria", desc: "Menjars i productes de proximitat.", url: "https://maps.app.goo.gl/6aBfdGkHpPT7f7949" },
                 { nom: "La Botigueta", lloc: "Plaça Església, 2", data: "Botiga", desc: "Queviures i degustació de productes locals." },
               ].map(item => (
                 <div key={item.nom} style={{ background: "#faf8f4", border: "0.5px solid #e0dbd0", borderRadius: 12, padding: "1.25rem" }}>
@@ -1265,6 +1276,11 @@ function AppInner() {
                     <span style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#9a7a5a" }}>ℹ️ {item.data}</span>
                   </div>
                   <p style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#666", lineHeight: 1.7, margin: 0 }}>{item.desc}</p>
+                  {item.url && (
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", marginTop: 8, fontFamily: "Arial, sans-serif", fontSize: 12, color: "#7a5a3a", textDecoration: "none", borderBottom: "1px solid #7a5a3a" }}>
+                      Obrir enllaç →
+                    </a>
+                  )}
                 </div>
               ))}
             </div>
@@ -1284,6 +1300,11 @@ function AppInner() {
                       <span style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#9a7a5a" }}>📅 {item.data}</span>
                     </div>
                     <p style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: "#666", lineHeight: 1.7, margin: 0 }}>{item.desc}</p>
+                    {item.url && (
+                      <a href={item.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", marginTop: 8, fontFamily: "Arial, sans-serif", fontSize: 12, color: "#7a5a3a", textDecoration: "none", borderBottom: "1px solid #7a5a3a" }}>
+                        Obrir enllaç →
+                      </a>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1355,7 +1376,7 @@ function AppInner() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16, marginBottom: "3rem" }}>
             {[
               { icon: "🏔️", text: "Vistes excepcionals" },
-              { icon: "🍷", text: "DO Priorat a la porta" },
+              { icon: "🍷", text: "DOQ Priorat a la porta" },
               { icon: "🥾", text: "Excursions i senderisme" },
               { icon: "🏊", text: "Piscina municipal" },
               { icon: "🍳", text: "Cuina casolana de mercat" },
