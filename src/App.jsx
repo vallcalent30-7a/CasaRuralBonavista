@@ -1,4 +1,16 @@
 // Casa Rural Bonavista — App.jsx
+// Versió: v2.13 — 14 agost 2026
+// - Corregits els noms de fitxer de les fotos de "La Casa": el
+//   redimensionat/compressió que es va fer abans de pujar-les va
+//   renumerar-les (ara casa-01, 02, 03, 04, 05, 06, 07, 09, 10, 11, 20,
+//   21, 22, 23, 30, totes .jpg) — ja no coincidien amb els noms indicats
+//   originalment (causava icones trencades). Verificat directament
+//   contra el contingut real de public/images a GitHub.
+// - No hi ha cap foto de "terrassa" pujada encara — s'han tret
+//   temporalment de FOTOS_CASA fins que es pugin.
+// - HOUSE_IMGS (miniatures "La Casa" a Inici) actualitzat als noms reals.
+// - ROOM_IMGS (miniatures "Habitacions" a Inici): no tenien mai foto de
+//   fons, només color — ara mostren la primera foto real de cada suite.
 // Versió: v2.12 — 13 agost 2026
 // - Fotos reals connectades (pujades pel client a public/images/):
 //   · SUITES[].fotos: suite1-01..10.jpg, suite2-01..08.jpg,
@@ -301,12 +313,16 @@ const nomVisible = (id) => {
   return (su && su.nomPublic) || id;
 };
 // Derivat de SUITES (font única de veritat) perquè id (navegació) i
-// etiqueta (text mostrat) no es puguin desincronitzar.
-const ROOM_IMGS = SUITES.map(su => ({ id: su.id, label: nomVisible(su.id), color: su.color }));
+// etiqueta (text mostrat) no es puguin desincronitzar. Fa servir la
+// primera foto real de cada suite com a miniatura.
+const ROOM_IMGS = SUITES.map(su => ({ id: su.id, label: nomVisible(su.id), color: su.color, src: su.fotos[0]?.src }));
+// Noms reals confirmats al repositori (public/images) — diferents dels
+// que es van indicar inicialment perquè el redimensionat de les fotos va
+// renumerar-les. Sense fotos de "terrassa": encara no s'han pujat.
 const HOUSE_IMGS = [
-  { src: "/images/casa-00.jpg", color: "#c8b89a" },
-  { src: "/images/casa-05.jpeg", color: "#baa88a" },
-  { src: "/images/terrassa-02.jpeg", color: "#d4c4a8" },
+  { src: "/images/casa-01.jpg", color: "#c8b89a" },
+  { src: "/images/casa-05.jpg", color: "#baa88a" },
+  { src: "/images/casa-11.jpg", color: "#d4c4a8" },
 ];
 const ENTORN_IMGS = [
   { src: "/images/lloar-01.jpg", color: "#7a9a68" },
@@ -314,13 +330,14 @@ const ENTORN_IMGS = [
   { src: "/images/lloar-mirador.jpg", color: "#6a8a58" },
   { src: "/images/lloar-03.jpg", color: "#7a9a68" },
 ];
-// Fotos reals de la casa (interiors) i la terrassa, pujades a public/images.
-// Noms i extensions exactes tal com es van pujar (no totes són .jpg).
+// Fotos reals de la casa, pujades a public/images. Noms confirmats
+// directament al repositori de GitHub (v2.13) — el redimensionat de les
+// fotos les va renumerar respecte a la llista original, i els fitxers de
+// "terrassa" no s'hi van arribar a pujar (pendents).
 const FOTOS_CASA = [
-  "casa-00.jpg", "casa-01.jpeg", "casa-02.jpeg", "casa-03.jpg", "casa-04.jpg",
-  "casa-05.jpeg", "casa-06.jpeg", "casa-07.jpeg", "casa-08.jpeg", "casa-09.jpeg", "casa-10.jpeg",
-  "terrassa-01.jpeg", "terrassa-02.jpeg", "terrassa-03.jpeg", "terrassa-04.jpeg",
-  "terrassa-05.jpeg", "terrassa-10.jpeg", "terrassa-12.jpeg",
+  "casa-01.jpg", "casa-02.jpg", "casa-03.jpg", "casa-04.jpg", "casa-05.jpg",
+  "casa-06.jpg", "casa-07.jpg", "casa-09.jpg", "casa-10.jpg", "casa-11.jpg",
+  "casa-20.jpg", "casa-21.jpg", "casa-22.jpg", "casa-23.jpg", "casa-30.jpg",
 ].map(f => ({ src: `/images/${f}`, color: "#c8b89a", alt: "La Casa" }));
 // ─── MÒDUL: CONTACTE ────────────────────────────────────────────────────
 // Component independent (no viu dins del render d'App) per evitar que es
@@ -1441,6 +1458,7 @@ function AppInner() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 16, maxWidth: 900, margin: "0 auto 3rem" }}>
           {ROOM_IMGS.map((r) => (
             <div key={r.id} onClick={() => go(r.id)} style={{ cursor: "pointer", position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "2/3", background: r.color }}>
+              {r.src && <img src={r.src} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
               <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.28)" }} />
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "1rem", background: "linear-gradient(to top, rgba(0,0,0,0.6), transparent)" }}>
                 <p style={{ margin: 0, fontFamily: "Georgia, serif", fontSize: 18, fontWeight: 600, color: "#fff" }}>{r.label}</p>
