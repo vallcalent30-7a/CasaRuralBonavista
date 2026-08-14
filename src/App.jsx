@@ -1,4 +1,40 @@
 // Casa Rural Bonavista — App.jsx
+// Versió: v2.12 — 13 agost 2026
+// - Fotos reals connectades (pujades pel client a public/images/):
+//   · SUITES[].fotos: suite1-01..10.jpg, suite2-01..08.jpg,
+//     suite3-02..16.jpg (només els números facilitats) — carrusels de
+//     cada suite (Galeria ja suportava foto.src, no calia tocar-la).
+//   · FOTOS_CASA: casa-00..10 (extensions .jpg/.jpeg exactes segons els
+//     fitxers pujats) + terrassa-01..12 (.jpeg) — galeria de la pàgina
+//     "La Casa".
+//   · HOUSE_IMGS (graella petita "La Casa" a Inici): casa-00, casa-05,
+//     terrassa-02 (mostra representativa).
+//   · ENTORN_IMGS (graella petita "L'Entorn" a Inici): lloar-01, lloar-02,
+//     lloar-03, lloar-mirador.
+//   Els dos blocs de graella petita (HOUSE_IMGS/ENTORN_IMGS) no
+//   suportaven <img>, només color de fons — s'ha afegit renderitzat
+//   condicional d'imatge quan hi ha .src.
+// - Alt text dels carrusels de suites genèric ("Suite X — Foto n") perquè
+//   no sé què mostra cada fotografia concreta; se'ls pot personalitzar si
+//   cal (p. ex. "Bany", "Balcó") indicant-me quin número és quina.
+// Versió: v2.11 — 13 agost 2026
+// - Contacte: telèfon real +34 695 842 727, ara clicable (tel:) i amb nova
+//   opció de WhatsApp (wa.me), també clicable. Email també clicable
+//   (mailto:).
+// - L'Entorn ("El Lloar, el poble"): afegits dos paràgrafs verificats —
+//   DOQ Priorat (única amb la Rioja a tot Espanya) i pertinença a l'Espai
+//   de Medi Nocturn Protegit de la Serra de Montsant/Muntanyes de Prades
+//   (zona de cel fosc protegit més gran d'Europa, Destinació Turística
+//   Starlight, protecció màxima E1 segons Resolució ACC/3199/2021, que
+//   inclou explícitament El Lloar entre els 32 municipis).
+// - Senderisme i ciclisme: afegida fitxa "Xarxa de miradors astronòmics"
+//   (10 miradors del Parc Natural de la Serra de Montsant, dada
+//   verificada).
+// PENDENT: fotos reals — s'ha acordat la convenció de noms (casa*,
+// terrassa* → La Casa; lloar* → Inici/L'Entorn; suite1*/suite2*/suite3* →
+// carrusels de cada suite) però calen els fitxers concrets (o accés a la
+// carpeta) per completar el cablejat a SUITES[].fotos / FOTOS_CASA /
+// HOUSE_IMGS / ENTORN_IMGS.
 // Versió: v2.10 — 30 juliol 2026
 // - Inici: "DO Priorat a la porta" → "DOQ Priorat a la porta" (denominació
 //   correcta: DOQ Priorat).
@@ -230,24 +266,16 @@ const SUITES = [
     descripcio: "Suite doble amb bany, llum natural, equipada amb tots els elements per a una estada perfecta al Priorat. Tranquil·litat, confort i l'encant d'una casa de pedra restaurada al nucli d'El Lloar.",
     extras: ["Esmorzar inclòs"], badge: null,
     fotos: [
-      { color: "#9a8a72", alt: "Suite 1 — Vista general" },
-      { color: "#8a7a62", alt: "Suite 1 — Llit" },
-      { color: "#aa9a82", alt: "Suite 1 — Bany" },
-      { color: "#7a6a52", alt: "Suite 1 — Detalls" },
-      { color: "#b0a090", alt: "Suite 1 — Ambient" },
-    ]
+      "01", "02", "03", "04", "05", "06", "07", "08", "09", "10",
+    ].map(n => ({ src: `/images/suite1-${n}.jpg`, color: "#9a8a72", alt: `Suite 1 — Foto ${n}` }))
   },
   {
     id: "Suite 2", nomPublic: null, tipus: "Doble", color: "#c4b09a", capacitat: 2, capacitatText: "2",
     descripcio: "Suite doble amb bany, llum natural, equipada amb tots els elements per a una estada perfecta al Priorat. Perfecta per a una escapada en parella al cor del Priorat.",
     extras: ["Esmorzar inclòs"], badge: null,
     fotos: [
-      { color: "#c4b09a", alt: "Suite 2 — Vista general" },
-      { color: "#b4a08a", alt: "Suite 2 — Llit" },
-      { color: "#d4c0aa", alt: "Suite 2 — Bany" },
-      { color: "#a49080", alt: "Suite 2 — Detalls" },
-      { color: "#c8b8a0", alt: "Suite 2 — Ambient" },
-    ]
+      "01", "02", "03", "04", "05", "06", "07", "08",
+    ].map(n => ({ src: `/images/suite2-${n}.jpg`, color: "#c4b09a", alt: `Suite 2 — Foto ${n}` }))
   },
   {
     id: "Suite 3", nomPublic: 'Suite "La Principal"', tipus: "Quàdruple · Balcó privat", color: "#b5a48a", capacitat: 4, capacitatText: "2/4",
@@ -255,12 +283,8 @@ const SUITES = [
     extras: ["Balcó privat amb vistes", "Esmorzar inclòs"],
     badge: "La més especial",
     fotos: [
-      { color: "#b5a48a", alt: "Suite 3 — Vista general" },
-      { color: "#a89478", alt: "Suite 3 — Llit" },
-      { color: "#c4b09a", alt: "Suite 3 — Balcó" },
-      { color: "#9a8468", alt: "Suite 3 — Bany" },
-      { color: "#b0a080", alt: "Suite 3 — Detalls" },
-    ]
+      "02", "03", "04", "05", "06", "07", "08", "10", "11", "12", "13", "14", "15", "16",
+    ].map(n => ({ src: `/images/suite3-${n}.jpg`, color: "#b5a48a", alt: `Suite 3 — Foto ${n}` }))
   }
 ];
 const SUITE_AMENITIES = [
@@ -279,17 +303,25 @@ const nomVisible = (id) => {
 // Derivat de SUITES (font única de veritat) perquè id (navegació) i
 // etiqueta (text mostrat) no es puguin desincronitzar.
 const ROOM_IMGS = SUITES.map(su => ({ id: su.id, label: nomVisible(su.id), color: su.color }));
-const HOUSE_IMGS = [{ color: "#c8b89a" }, { color: "#baa88a" }, { color: "#d4c4a8" }];
-const ENTORN_IMGS = [{ color: "#7a9a68" }, { color: "#8aaa78" }, { color: "#6a8a58" }];
-const FOTOS_CASA = [
-  { color: "#c8b89a", alt: "Vestíbul d'accés" },
-  { color: "#b8a88a", alt: "Sala d'estar amb xemeneia" },
-  { color: "#d4c4a8", alt: "Menjador" },
-  { color: "#a89878", alt: "Cuina" },
-  { color: "#c0b090", alt: "Terrassa amb vistes al Montsant" },
-  { color: "#b0a080", alt: "Vistes a la Vall de Gratallops" },
-  { color: "#c8b8a0", alt: "Detalls de pedra i fusta" },
+const HOUSE_IMGS = [
+  { src: "/images/casa-00.jpg", color: "#c8b89a" },
+  { src: "/images/casa-05.jpeg", color: "#baa88a" },
+  { src: "/images/terrassa-02.jpeg", color: "#d4c4a8" },
 ];
+const ENTORN_IMGS = [
+  { src: "/images/lloar-01.jpg", color: "#7a9a68" },
+  { src: "/images/lloar-02.jpg", color: "#8aaa78" },
+  { src: "/images/lloar-mirador.jpg", color: "#6a8a58" },
+  { src: "/images/lloar-03.jpg", color: "#7a9a68" },
+];
+// Fotos reals de la casa (interiors) i la terrassa, pujades a public/images.
+// Noms i extensions exactes tal com es van pujar (no totes són .jpg).
+const FOTOS_CASA = [
+  "casa-00.jpg", "casa-01.jpeg", "casa-02.jpeg", "casa-03.jpg", "casa-04.jpg",
+  "casa-05.jpeg", "casa-06.jpeg", "casa-07.jpeg", "casa-08.jpeg", "casa-09.jpeg", "casa-10.jpeg",
+  "terrassa-01.jpeg", "terrassa-02.jpeg", "terrassa-03.jpeg", "terrassa-04.jpeg",
+  "terrassa-05.jpeg", "terrassa-10.jpeg", "terrassa-12.jpeg",
+].map(f => ({ src: `/images/${f}`, color: "#c8b89a", alt: "La Casa" }));
 // ─── MÒDUL: CONTACTE ────────────────────────────────────────────────────
 // Component independent (no viu dins del render d'App) per evitar que es
 // torni a crear i perdi l'estat del formulari en cada render del pare.
@@ -399,16 +431,23 @@ function ContactePage({ go, s, NavBar, Footer, BackBtn }) {
           <div>
             <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 500, color: "#3a2a18", marginTop: 0 }}>Informació</h2>
             {[
-              { icon: "✉️", label: "Email", val: "contacta@casaruralbonavista.cat" },
+              { icon: "✉️", label: "Email", val: "contacta@casaruralbonavista.cat", href: "mailto:contacta@casaruralbonavista.cat" },
               { icon: "📍", label: "Adreça", val: "Carrer del Pla More, 13\nEl Lloar · 43737 Tarragona" },
-              { icon: "📞", label: "Telèfon", val: "Pròximament disponible" },
+              { icon: "📞", label: "Telèfon", val: "+34 695 842 727", href: "tel:+34695842727" },
+              { icon: "💬", label: "WhatsApp", val: "+34 695 842 727", href: "https://wa.me/34695842727" },
               { icon: "🕐", label: "Resposta", val: "En menys de 24 hores" },
             ].map(item => (
               <div key={item.label} style={{ display: "flex", gap: 14, marginBottom: 20, alignItems: "flex-start" }}>
                 <span style={{ fontSize: 20, marginTop: 2 }}>{item.icon}</span>
                 <div>
                   <div style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#9a8060", marginBottom: 2 }}>{item.label}</div>
-                  <div style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#3a2a18", whiteSpace: "pre-line" }}>{item.val}</div>
+                  <div style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#3a2a18", whiteSpace: "pre-line" }}>
+                    {item.href ? (
+                      <a href={item.href} target={item.href.startsWith("http") ? "_blank" : undefined} rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined} style={{ color: "#3a2a18", textDecoration: "none", borderBottom: "1px solid #9a8060" }}>
+                        {item.val}
+                      </a>
+                    ) : item.val}
+                  </div>
                 </div>
               </div>
             ))}
@@ -1208,6 +1247,7 @@ function AppInner() {
           { nom: "Camí de les Bassetes del Lloar", lloc: "El Lloar", data: "Tot l'any", desc: "Sender perfectament senyalitzat que travessa les vinyes del celler Torres i el pintoresc paratge de roca vermella dels Rogerals." },
           { nom: "Rutes BTT del Priorat", lloc: "Gratallops · Bellmunt · El Lloar", data: "Tot l'any", desc: "Xarxa oficial Centre BTT Priorat. Traçats que connecten amb El Lloar." },
           { nom: "Carretera del vi (cicloturisme)", lloc: "Falset – Gratallops – El Lloar", data: "Tot l'any", desc: "Ruta circular molt popular entre ciclistes. El Lloar és parada obligada." },
+          { nom: "Xarxa de miradors astronòmics", lloc: "Parc Natural de la Serra de Montsant", data: "Tot l'any", desc: "10 miradors repartits pels municipis de l'entorn del parc, equipats per a l'observació del cel nocturn, més una ruta astronòmica nocturna des d'Albarca." },
         ]
       },
       {
@@ -1260,6 +1300,12 @@ function AppInner() {
             </p>
             <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666", lineHeight: 1.9, marginBottom: 24 }}>
               Amb una extensió de 6,80 km² i la Moleta (560 m) com a principal elevació, el poble va formar part de la baronia de Cabacés des de la seva fundació, sota l'autoritat del bisbat de Tortosa, fins que es va constituir com a municipi autònom amb ajuntament propi durant la Guerra del Francès, segregant-se de La Figuera.
+            </p>
+            <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666", lineHeight: 1.9, marginBottom: 24 }}>
+              El Lloar forma part de la DOQ Priorat, la Denominació d'Origen Qualificada dels seus vins — juntament amb la Rioja, l'única categoria d'aquest rang a tot Espanya.
+            </p>
+            <p style={{ fontFamily: "Arial, sans-serif", fontSize: 14, color: "#666", lineHeight: 1.9, marginBottom: 24 }}>
+              El poble forma part també de l'Espai de Medi Nocturn Protegit de la Serra de Montsant i les Muntanyes de Prades, la zona de cel fosc protegit més gran d'Europa, certificada com a Destinació Turística Starlight i classificada amb la màxima protecció envers la contaminació lumínica (E1) segons la Resolució ACC/3199/2021.
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
               {[
@@ -1413,6 +1459,7 @@ function AppInner() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 16, maxWidth: 900, margin: "0 auto 3rem" }}>
           {HOUSE_IMGS.map((r, i) => (
             <div key={i} onClick={() => go("La Casa")} style={{ cursor: "pointer", position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "4/3", background: r.color }}>
+              {r.src && <img src={r.src} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
               <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.15)" }} />
               <div style={{ position: "absolute", bottom: 8, right: 12 }}>
                 <span style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#fff", opacity: 0.8 }}>Veure →</span>
@@ -1430,6 +1477,7 @@ function AppInner() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 16, maxWidth: 900, margin: "0 auto 3rem" }}>
           {ENTORN_IMGS.map((r, i) => (
             <div key={i} onClick={() => go("L'Entorn")} style={{ cursor: "pointer", position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "4/3", background: r.color }}>
+              {r.src && <img src={r.src} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
               <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.15)" }} />
               <div style={{ position: "absolute", bottom: 8, right: 12 }}>
                 <span style={{ fontFamily: "Arial, sans-serif", fontSize: 12, color: "#fff", opacity: 0.8 }}>Descobrir →</span>
