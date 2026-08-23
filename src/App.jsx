@@ -1,4 +1,23 @@
 // Casa Rural Bonavista — App.jsx
+// Versió: v2.14 — 23 agost 2026
+// - Disponibilitat real: substituït l'array fictici BLOCKED per la lectura
+//   en directe de /api/disponibilitat (nova funció serverless, fitxer
+//   separat api/disponibilitat.js), que combina els calendaris iCal reals
+//   de Booking.com i EscapadaRural per a cada suite.
+// - Nou hook useDisponibilitat(): carrega la disponibilitat un cop en
+//   muntar Reserves/Pack Romàntic i calcula blockedGlobal (un dia només
+//   es marca "no disponible" al calendari inicial si les 3 suites estan
+//   ocupades — abans de triar suite no se sap encara quina es vol).
+// - Pas "2. Suite" de Reserves: a més del filtre per capacitat, ara també
+//   es filtren les suites que no tenen disponibilitat real per a les
+//   nits exactes seleccionades (suiteTeDisponibilitat). Si no en queda
+//   cap, es mostra un avís en lloc d'una llista buida.
+// - Avisos discrets de "carregant disponibilitat" i d'error de xarxa (si
+//   /api/disponibilitat falla, no es bloqueja el formulari: es deixa
+//   triar lliurement i es confirma per correu, com fins ara).
+// - LIMITACIÓ CONEGUDA: Booking.com i EscapadaRural actualitzen els seus
+//   exports iCal cada 6-12h, no en temps real; i les reserves telefòniques
+//   o directes cal bloquejar-les manualment als dos portals.
 // Versió: v2.13 — 14 agost 2026
 // - Corregits els noms de fitxer de les fotos de "La Casa": el
 //   redimensionat/compressió que es va fer abans de pujar-les va
@@ -222,7 +241,7 @@
 // plural "persona/persones". v1.1 va introduir la selecció de dates per
 // rang a Reserves. v1.0 va corregir el formulari de Contacte (enviament
 // mailto, honeypot, validació d'email).
-import { useState, useEffect, Component } from "react";
+import { useState, useEffect, useMemo, Component } from "react";
 // Xarxa de seguretat: si qualsevol pàgina llança un error durant el render,
 // React buida tot #root per defecte (sense menú ni contingut — pantalla en blanc).
 // Aquest ErrorBoundary intercepta l'error i el mostra en pantalla, per poder
@@ -528,7 +547,41 @@ const TARIFES = {
   "Suite 2": { preu: 127, extra: 0 },
   "Suite 3": { preu: 182, extra: 40 },
 };
-const BLOCKED = ["2026-04-10", "2026-04-11", "2026-04-12", "2026-04-13", "2026-04-14", "2026-04-18", "2026-04-19", "2026-05-01", "2026-05-02", "2026-05-03"];
+// La disponibilitat ja no és fictícia: es llegeix de /api/disponibilitat
+// (calendaris reals de Booking.com + EscapadaRural, per suite). Vegeu
+// useDisponibilitat() més avall.
+// Retorna nits en format YYYY-MM-DD de l'interval [inici, fi).
+const nitsEntreDates = (inici, fi) => {
+  const out = [];
+  let d = new Date(inici + "T00:00:00Z");
+  const end = new Date(fi + "T00:00:00Z");
+  while (d < end) {
+    out.push(d.toISOString().slice(0, 10));
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+  return out;
+};
+// Hook compartit per Reserves i Pack Romàntic: carrega la disponibilitat
+// real un cop en muntar el component.
+function useDisponibilitat() {
+  const [disponibilitat, setDisponibilitat] = useState(null); // null = carregant
+  const [dispError, setDispError] = useState(false);
+  useEffect(() => {
+    fetch("/api/disponibilitat")
+      .then(r => r.json())
+      .then(data => setDisponibilitat(data && data.blocked ? data.blocked : {}))
+      .catch(() => { setDisponibilitat({}); setDispError(true); });
+  }, []);
+  // Un dia es considera "no disponible per a tothom" (calendari inicial,
+  // abans de triar suite) només si les 3 suites estan ocupades aquell dia.
+  const blockedGlobal = useMemo(() => {
+    if (!disponibilitat) return [];
+    const perSuite = SUITES.map(su => new Set(disponibilitat[su.id] || []));
+    const totes = new Set(perSuite.flatMap(s => Array.from(s)));
+    return Array.from(totes).filter(d => perSuite.every(s => s.has(d)));
+  }, [disponibilitat]);
+  return { disponibilitat, dispError, carregant: disponibilitat === null, blockedGlobal };
+}
 // Pack Romàntic: experiència d'1 nit, disponible per a les 3 suites, preu
 // combinat (tarifa base + PACK_ROMANTIC_PREU). Es reserva des de la
 // pestanya "Pack Romàntic" (calendari propi, només 1 nit), que reenruta
@@ -536,6 +589,7 @@ const BLOCKED = ["2026-04-10", "2026-04-11", "2026-04-12", "2026-04-13", "2026-0
 // Mai se sopa al balcó.
 const PACK_ROMANTIC_PREU = 120;
 function ReservesPage({ go, s, NavBar, Footer, packSeed, onConsumSeed }) {
+  const { disponibilitat, dispError, carregant, blockedGlobal } = useDisponibilitat();
   const [any, setAny] = useState(2026);
   const [mes, setMes] = useState(3);
   const [dataInici, setDataInici] = useState(packSeed ? packSeed.dataInici : null);
@@ -608,7 +662,7 @@ function ReservesPage({ go, s, NavBar, Footer, packSeed, onConsumSeed }) {
     const diaB = Number(keyB.slice(-2));
     const lo = Math.min(diaA, diaB), hi = Math.max(diaA, diaB);
     for (let d = lo + 1; d < hi; d++) {
-      if (BLOCKED.includes(toKey(d))) return true;
+      if (blockedGlobal.includes(toKey(d))) return true;
     }
     return false;
   };
@@ -616,7 +670,7 @@ function ReservesPage({ go, s, NavBar, Footer, packSeed, onConsumSeed }) {
   // Un 3r clic (quan ja hi ha un rang complet) comença una nova selecció.
   const toggleDia = (d) => {
     const k = toKey(d);
-    if (BLOCKED.includes(k)) return;
+    if (blockedGlobal.includes(k)) return;
     setAvisRang("");
     if (!dataInici) {
       setDataInici(k);
@@ -656,7 +710,16 @@ function ReservesPage({ go, s, NavBar, Footer, packSeed, onConsumSeed }) {
     return `${d} ${mesos[Number(m) - 1]}`;
   };
   const preuTotal = suiteEsc ? calcPreu(suiteEsc) + (packRomantic ? PACK_ROMANTIC_PREU : 0) : 0;
-  const suitesDisp = SUITES.filter(su => su.capacitat >= pax).map(su => su.id);
+  // Una suite només es mostra al pas 2 si té capacitat suficient I si cap
+  // de les nits seleccionades està ocupada per a aquella suite en concret
+  // (disponibilitat real, no la global). Si encara no s'ha carregat la
+  // disponibilitat, no es filtra per no amagar suites per error.
+  const suiteTeDisponibilitat = (suiteId) => {
+    if (!dataInici || !dataFi || !disponibilitat) return true;
+    const blockedSuite = disponibilitat[suiteId] || [];
+    return !nitsEntreDates(dataInici, dataFi).some(k => blockedSuite.includes(k));
+  };
+  const suitesDisp = SUITES.filter(su => su.capacitat >= pax && suiteTeDisponibilitat(su.id)).map(su => su.id);
   return (
     <div style={s.wrap}>
       <NavBar />
@@ -693,7 +756,7 @@ function ReservesPage({ go, s, NavBar, Footer, packSeed, onConsumSeed }) {
                 {Array(primer).fill(null).map((_, i) => <div key={"e" + i} />)}
                 {Array(dies).fill(null).map((_, i) => {
                   const k = toKey(i + 1);
-                  const blocked = BLOCKED.includes(k);
+                  const blocked = blockedGlobal.includes(k);
                   const isInici = k === dataInici;
                   const isFi = k === dataFi;
                   const isEnRang = Boolean(dataInici && dataFi && k > dataInici && k < dataFi);
@@ -709,6 +772,14 @@ function ReservesPage({ go, s, NavBar, Footer, packSeed, onConsumSeed }) {
                 <span style={{ color: "#5a3e28" }}>■ Entrada / Sortida</span>
                 <span style={{ color: "#c8a878" }}>■ Nits incloses</span>
               </div>
+              {carregant && (
+                <div style={{ marginTop: 10, fontFamily: "Arial, sans-serif", fontSize: 12, color: "#9a8060" }}>Carregant disponibilitat real...</div>
+              )}
+              {dispError && (
+                <div style={{ marginTop: 10, padding: "8px 12px", background: "#fdf3e3", border: "0.5px solid #e8d0a0", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 12, color: "#8a6a20" }}>
+                  No s'ha pogut comprovar la disponibilitat en temps real. Confirmarem la reserva per correu un cop rebuda la sol·licitud.
+                </div>
+              )}
               {avisRang && (
                 <div style={{ marginTop: 10, padding: "8px 12px", background: "#fdeceb", border: "0.5px solid #e8b0aa", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 12, color: "#a03028" }}>
                   {avisRang}
@@ -758,6 +829,11 @@ function ReservesPage({ go, s, NavBar, Footer, packSeed, onConsumSeed }) {
             <div style={{ background: "#f0ebe2", borderRadius: 12, padding: "1rem 1.5rem", marginBottom: 24, fontFamily: "Arial, sans-serif", fontSize: 14, color: "#5a3e28" }}>
               📅 {nits} nit{nits > 1 ? "s" : ""} · {pax} {pax > 1 ? "persones" : "persona"}{packRomantic ? " · 💐 Pack Romàntic" : ""}
             </div>
+            {suitesDisp.length === 0 && !carregant && (
+              <div style={{ background: "#fdf8f0", border: "0.5px solid #e0dbd0", borderRadius: 12, padding: "1.5rem", textAlign: "center", fontFamily: "Arial, sans-serif", fontSize: 14, color: "#9a6a3a", marginBottom: 20 }}>
+                Cap suite disponible per a les dates i persones seleccionades. Prova amb altres dates o escriu-nos directament.
+              </div>
+            )}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 20 }}>
               {suitesDisp.map(suite => {
                 const preu = calcPreu(suite) + (packRomantic ? PACK_ROMANTIC_PREU : 0);
@@ -845,6 +921,7 @@ function ReservesPage({ go, s, NavBar, Footer, packSeed, onConsumSeed }) {
 // triar un dia si l'endemà ja està bloquejat. En confirmar, es reenruta
 // cap al pas "2. Suite" de Reserves via onIniciarReserva (packSeed).
 function PackRomanticPage({ go, s, NavBar, Footer, BackBtn, onIniciarReserva }) {
+  const { dispError, carregant, blockedGlobal } = useDisponibilitat();
   const [any, setAny] = useState(2026);
   const [mes, setMes] = useState(3);
   const [dataInici, setDataInici] = useState(null);
@@ -856,11 +933,11 @@ function PackRomanticPage({ go, s, NavBar, Footer, BackBtn, onIniciarReserva }) 
   const toKey = (d) => `${any}-${String(mes + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   const toggleDia = (d) => {
     const k = toKey(d);
-    if (BLOCKED.includes(k)) return;
+    if (blockedGlobal.includes(k)) return;
     const seguent = new Date(k);
     seguent.setDate(seguent.getDate() + 1);
     const kSeguent = seguent.toISOString().slice(0, 10);
-    if (BLOCKED.includes(kSeguent)) {
+    if (blockedGlobal.includes(kSeguent)) {
       setAvis("L'endemà d'aquest dia no està disponible. Tria un altre dia d'entrada.");
       setDataInici(null);
       setDataFi(null);
@@ -919,7 +996,7 @@ function PackRomanticPage({ go, s, NavBar, Footer, BackBtn, onIniciarReserva }) 
               {Array(primer).fill(null).map((_, i) => <div key={"e" + i} />)}
               {Array(dies).fill(null).map((_, i) => {
                 const k = toKey(i + 1);
-                const blocked = BLOCKED.includes(k);
+                const blocked = blockedGlobal.includes(k);
                 const isInici = k === dataInici;
                 const isFi = k === dataFi;
                 return (
@@ -933,6 +1010,14 @@ function PackRomanticPage({ go, s, NavBar, Footer, BackBtn, onIniciarReserva }) 
               <span>■ <span style={{ color: "#ccc" }}>No disponible</span></span>
               <span style={{ color: "#5a3e28" }}>■ Entrada / Sortida</span>
             </div>
+            {carregant && (
+              <div style={{ marginTop: 10, fontFamily: "Arial, sans-serif", fontSize: 12, color: "#9a8060" }}>Carregant disponibilitat real...</div>
+            )}
+            {dispError && (
+              <div style={{ marginTop: 10, padding: "8px 12px", background: "#fdf3e3", border: "0.5px solid #e8d0a0", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 12, color: "#8a6a20" }}>
+                No s'ha pogut comprovar la disponibilitat en temps real. Confirmarem la reserva per correu un cop rebuda la sol·licitud.
+              </div>
+            )}
             {avis && (
               <div style={{ marginTop: 10, padding: "8px 12px", background: "#fdeceb", border: "0.5px solid #e8b0aa", borderRadius: 8, fontFamily: "Arial, sans-serif", fontSize: 12, color: "#a03028" }}>
                 {avis}
