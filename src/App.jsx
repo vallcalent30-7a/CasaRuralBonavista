@@ -1,5 +1,5 @@
 // Casa Rural Bonavista — App.jsx
-// Versió: v2.14 — 23 agost 2026
+// Versió: v2.14 — 14 agost 2026
 // - Disponibilitat real: substituït l'array fictici BLOCKED per la lectura
 //   en directe de /api/disponibilitat (nova funció serverless, fitxer
 //   separat api/disponibilitat.js), que combina els calendaris iCal reals
